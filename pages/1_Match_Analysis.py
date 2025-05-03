@@ -16,8 +16,8 @@ import glob # For finding weekly files
 
 # --- Configuration ---
 # Change this to 'csv', 'postgres', or 'text' to simulate different sources
-WEEKLY_PREDICTIONS_DIR = "dashboard/data/pre_match/"
-COMBINED_RESULTS_FILE = "dashboard/data/combined_results.csv"
+WEEKLY_PREDICTIONS_DIR = "data/pre_match/"
+COMBINED_RESULTS_FILE = "data/combined_results.csv"
 
 DATA_SOURCE = 'csv'
 # Placeholder for DB connection (replace with actuals if using postgres)
