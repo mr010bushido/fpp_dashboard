@@ -53,8 +53,8 @@ Follow these steps to get the application running locally:
 
 2.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/[YOUR_USERNAME]/[YOUR_REPONAME].git
-    cd [YOUR_REPONAME]
+    git clone https://github.com/mr010bushido/fpp_dashboard.git
+    cd fpp_download
     ```
 
 3.  **Create a Virtual Environment (Recommended):**
@@ -166,6 +166,6 @@ Contributions are welcome! If you'd like to contribute, please fork the reposito
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. *(Make sure you add a LICENSE file to your repo if you choose one!)*
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
 
 ---
