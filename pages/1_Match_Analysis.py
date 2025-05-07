@@ -1875,10 +1875,10 @@ if not selected_match_data:
                                     away_score_display = f"**{int(away_goals)}**"
                                     st.caption(f"{home_score_display}", unsafe_allow_html=True)
                                     st.markdown(f"{away_score_display}", unsafe_allow_html=True)
+
                                 else:
                                     st.markdown(f"{home_score_display}", unsafe_allow_html=True)
-                                    st.markdown(f"{away_score_display}", unsafe_allow_html=True)
-
+                                    st.markdown(f"{away_score_display}", unsafe_allow_html=True)                    
                         with col4:
                             # --- NEW: Display Stats if available ---
                             corners = (match.get('Corners'))
