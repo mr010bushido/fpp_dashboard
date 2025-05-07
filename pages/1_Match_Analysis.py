@@ -16,8 +16,8 @@ import glob # For finding weekly files
 
 # --- Configuration ---
 # Change this to 'csv', 'postgres', or 'text' to simulate different sources
-WEEKLY_PREDICTIONS_DIR = "data/pre_match/"
-COMBINED_RESULTS_FILE = "data/combined_results.csv"
+WEEKLY_PREDICTIONS_DIR = "fpp_dashboard/data/pre_match/"
+COMBINED_RESULTS_FILE = "fpp_dashboard/data/combined_results.csv"
 
 DATA_SOURCE = 'csv'
 # Placeholder for DB connection (replace with actuals if using postgres)
@@ -425,6 +425,7 @@ def get_progress_color(value):
 
 def create_colored_progress_bar(value, text_label=None):
     """Generates HTML for a progress bar with color based on value."""
+    # st.write(value)
     if value is None or not isinstance(value, (int, float)):
         value = 0 # Default to 0 if invalid input
     value = max(0, min(100, value)) # Clamp value between 0 and 100
@@ -740,8 +741,18 @@ def load_data_from_csv(filepath) -> pd.DataFrame:
         # Basic Cleaning & Type Conversion (adjust as needed based on actual CSV)
         # Convert potential numeric columns, coercing errors to NaN then filling
         float_cols = ['exp_val_h','exp_val_d','exp_val_a','ppg_h','ppg_h_all','ppg_a','ppg_a_all','goals_h','xg_h','goals_a','xg_a','conceded_h','xga_h','conceded_a','xga_a','1h_o05_h','1h_o05_a','2h_o05_h','2h_o05_a','team_goals_0_5_h','team_goals_1_5_h','team_goals_0_5_a','team_goals_1_5_a','match_goals_1_5_a','match_goals_2_5_h','match_goals_1_5_h','match_goals_2_5_a','clean_sheet_h','clean_sheet_a','ht_win_rates_h','ft_win_rates_h','ht_win_rates_a','ft_win_rates_a','h2h_hva_ppg_str','h2h_hva_ppg_str','h2h_h_goals_str','HeadToHeadHomeXG','h2h_a_goals_str','HeadToHeadAwayXG','h2h_hva_o1_5','h2h_hva_o2_5','confidence_score','pred_outcome_conf','pred_goals_conf','pred_corners_conf',
+
+        'Last5_HomeBothTeamsToScore','Last5HomeAvergeTotalShots','Last5HomeAvergeTotalShotsOnGoal','Last5HomeAvergeTotalFouls','Last5HomeAvergeTotalcorners','Last5HomeAvergeTotalYellowCards','Last5HomeAvergeTotalRedCards','Last5_AwayBothTeamsToScore','Last5AwayAvergeTotalShots','Last5AwayAvergeTotalShotsOnGoal','Last5AwayAvergeTotalFouls','Last5AwayAvergeTotalcorners','Last5AwayAvergeTotalYellowCards','Last5AwayAvergeTotalRedCards','l5_home_for_league_avg_shots','l5_home_for_league_avg_sot','l5_home_for_league_avg_corners','l5_home_for_league_avg_fouls','l5_home_for_league_avg_yellow_cards','l5_home_for_league_avg_red_cards','l5_away_for_league_avg_shots','l5_away_for_league_avg_sot','l5_away_for_league_avg_corners','l5_away_for_league_avg_fouls','l5_away_for_league_avg_yellow_cards','l5_away_for_league_avg_red_cards','l5_away_against_league_avg_shots','l5_away_against_league_avg_sot','l5_away_against_league_avg_corners','l5_away_against_league_avg_fouls','l5_away_against_league_avg_yellow_cards','l5_away_against_league_avg_red_cards','l5_home_against_league_avg_shots','l5_home_against_league_avg_sot','l5_home_against_league_avg_corners','l5_home_against_league_avg_fouls','l5_home_against_league_avg_yellow_cards','l5_home_against_league_avg_red_cards','HeadToHeadBTTS','HeadToHeadHomeTotalShots','HeadToHeadAwayTotalShots','HeadToHeadHomeShotsOnTarget','HeadToHeadAwayShotsOnTarget','HeadToHeadHomeFouls','HeadToHeadAwayFouls','HeadToHeadHomeCorners','HeadToHeadAwayCorners','HeadToHeadHomeYellowCards','HeadToHeadAwayYellowCards','HeadToHeadHomeRedCards','HeadToHeadAwayRedCards','HeadToHeadOver7Corners','HeadToHeadOver8Corners','HeadToHeadOver9Corners','HeadToHeadOver10Corners','HeadToHeadOver1YellowCards','HeadToHeadOver2YellowCards','HeadToHeadOver3YellowCards','HeadToHeadOver4YellowCards','HomeGoals','AwayGoals','Corners','YellowCards','RedCards',
+        'HTRHome','HTRDraw','HTRAway','FTTotalGoalsOver0.5','FTTotalGoalsOver1.5','FTTotalGoalsOver2.5','FTTotalGoalsOver3.5','FTBTTS','FHTTotalGoalsOver0.5','FHTTotalGoalsOver1.5','FHTTotalGoalsOver2.5','FHTTotalGoalsOver3.5','SHTTotalGoalsOver0.5','SHTTotalGoalsOver1.5','SHTTotalGoalsOver2.5','SHTTotalGoalsOver3.5','HomeWinToNil','AwayWinToNil','ScoredFirstTime','HomeSOTResults',
+        'HomeShotsResults','HomeFoulsResults','HomeCornersResults','HomeOffsidesResults','HomeYellowsResults','HomeRedsResults','HomeGoalKeeperSavesResults','HomeXGResults','AwaySOTResults','AwayShotsResults','AwayFoulsResults','AwayCornersResults','AwayOffsidesResults','AwayYellowsResults','AwayRedsResults','AwayGoalKeeperSavesResults','AwayXGResults',
         
-        'HomeGoals','AwayGoals','Corners','YellowCards','RedCards','HTRHome','HTRDraw','HTRAway','FTTotalGoalsOver0.5 ','FTTotalGoalsOver1.5 ','FTTotalGoalsOver2.5 ','FTTotalGoalsOver3.5 ','FTBTTS','FHTTotalGoalsOver0.5','FHTTotalGoalsOver1.5','FHTTotalGoalsOver2.5','FHTTotalGoalsOver3.5','SHTTotalGoalsOver0.5','SHTTotalGoalsOver1.5','SHTTotalGoalsOver2.5','SHTTotalGoalsOver3.5','HomeWinToNil','AwayWinToNil','ScoredFirstTime',]
+        'HomeGoals','AwayGoals','Corners','YellowCards','RedCards','HTRHome','HTRDraw','HTRAway','FTTotalGoalsOver0.5 ','FTTotalGoalsOver1.5 ','FTTotalGoalsOver2.5 ','FTTotalGoalsOver3.5 ','FTBTTS','FHTTotalGoalsOver0.5','FHTTotalGoalsOver1.5','FHTTotalGoalsOver2.5','FHTTotalGoalsOver3.5','SHTTotalGoalsOver0.5','SHTTotalGoalsOver1.5','SHTTotalGoalsOver2.5','SHTTotalGoalsOver3.5','HomeWinToNil','AwayWinToNil','ScoredFirstTime',
+        
+        'Last5HomeOver7Corners','Last5HomeOver8Corners','Last5HomeOver9Corners','Last5HomeOver10Corners','Last5HomeAvergeTotalYellowCards','Last5HomeOver1YellowCards','Last5HomeOver2YellowCards','Last5HomeOver3YellowCards','Last5HomeOver4YellowCards','Last5HomeAvergeTotalRedCards',
+        'Last5AwayOver7Corners','Last5AwayOver8Corners','Last5AwayOver9Corners','Last5AwayOver10Corners','Last5AwayAvergeTotalYellowCards','Last5AwayOver1YellowCards','Last5AwayOver2YellowCards','Last5AwayOver3YellowCards','Last5AwayOver4YellowCards','Last5AwayAvergeTotalRedCards',
+        
+        'l5_league_avg_btts', 'l5HomeLeagueCleanSheet', 'l5AwayLeagueCleanSheet',
+        ]
 
         int_cols = ['h2h_hva_games','h2h_all_games','match_id']
 
@@ -1388,6 +1399,22 @@ def sort_data(df):
 
     return df
 
+def display_stat_row(label, home_value, away_value, home_align='right', label_align='center', away_align='left', label_weight='bold'):
+    """Displays a single row, handling None values by showing '--'."""
+    col1, col2, col3 = st.columns([2, 3, 2]) # Adjust ratios as needed
+
+    # Explicitly handle None before creating the final string
+    home_display = str(home_value) if home_value is not None else '--'
+    away_display = str(away_value) if away_value is not None else '--'
+
+    # Use the display strings in markdown
+    with col1:
+        st.markdown(f"<div style='text-align: {home_align};'>{home_display}</div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"<div style='text-align: {label_align}; font-weight: {label_weight};'>{label}</div>", unsafe_allow_html=True)
+    with col3:
+        st.markdown(f"<div style='text-align: {away_align};'>{away_display}</div>", unsafe_allow_html=True)
+
 # --- Streamlit App ---
 # st.set_page_config(layout="wide")
 
@@ -1972,6 +1999,7 @@ else:
         # Note: True right alignment might need more complex CSS depending on column behavior,
         # but placing the image in the right-most column often suffices visually.
         # If using a fixed width smaller than the column, text-align: right works.
+    
     with match_cols1:
         # --- Column 2: Text, Left-aligned (Default for markdown) ---
         # st.markdown(f"{selected_match_data.get('home_team', '--')}")
@@ -2024,8 +2052,79 @@ else:
             """,
             unsafe_allow_html=True
         )
-        # Centered both date and time using separate divs for potentially better spacing control
+        # --- Inject CSS for Centering Expander Label ---
+        # st.markdown("""
+        # <style>
+        #     [data-testid="stExpander"] summary p { /* Common selector for the text */
+        #         font-weight: bold; 
+        #         width: 100%; 
+        #         text-align: right;
+        #     }
+        #     /* Fallback selector if the above doesn't work */
+        #     [data-testid="stExpander"] summary div[data-testid="stExpanderHeader"] {
+        #         width: 100%;
+        #         text-align: right;
+        #     }
 
+        # </style>
+        # """, unsafe_allow_html=True)
+        
+        with st.expander("📊 Match Report", expanded=False):
+            # Expected Goals (xG) - Needs specific formatting
+            home_xg = selected_match_data.get('HomeXGResults')
+            away_xg = selected_match_data.get('AwayXGResults')
+            # Format only if it's a number (float or int), otherwise pass None to the helper
+            home_xg_display = f"{home_xg:.2f}" if isinstance(home_xg, (int, float)) else home_xg
+            away_xg_display = f"{away_xg:.2f}" if isinstance(away_xg, (int, float)) else away_xg
+            display_stat_row("Expected Goals (xG)", home_xg_display, away_xg_display)
+
+            # Shots - No special format, just handle None
+            home_shots = selected_match_data.get('HomeShotsResults')
+            away_shots = selected_match_data.get('AwayShotsResults')
+            display_stat_row("Shots", home_shots, away_shots) # Helper handles None -> '--'
+
+            # Shots on Target - No special format
+            home_sot = selected_match_data.get('HomeSOTResults')
+            away_sot = selected_match_data.get('AwaySOTResults')
+            display_stat_row("Shots on Target", home_sot, away_sot)
+
+            # Possession (%) - Needs '%' sign added
+            home_poss = selected_match_data.get('HomeBallPossessionResults')
+            away_poss = selected_match_data.get('AwayBallPossessionResults')
+            # Add '%' only if value is not None
+            home_poss_display = f"{home_poss}%" if home_poss is not None else home_poss
+            away_poss_display = f"{away_poss}%" if away_poss is not None else away_poss
+            display_stat_row("Possession (%)", home_poss_display, away_poss_display)
+
+            # Corners - No special format
+            home_cor = selected_match_data.get('HomeCornersResults')
+            away_cor = selected_match_data.get('AwayCornersResults')
+            display_stat_row("Corners", home_cor, away_cor)
+
+            # Fouls Committed - No special format
+            home_fouls = selected_match_data.get('HomeFoulsResults')
+            away_fouls = selected_match_data.get('AwayFoulsResults')
+            display_stat_row("Fouls Committed", home_fouls, away_fouls)
+
+            # Goalkeeper Saves - No special format
+            home_saves = selected_match_data.get('HomeGoalKeeperSavesResults')
+            away_saves = selected_match_data.get('AwayGoalKeeperSavesResults')
+            display_stat_row("Goalkeeper Saves", home_saves, away_saves)
+
+            # Offsides - No special format
+            home_offs = selected_match_data.get('HomeOffsidesResults')
+            away_offs = selected_match_data.get('AwayOffsidesResults')
+            display_stat_row("Offsides", home_offs, away_offs)
+
+            # Yellow Cards - No special format
+            home_yellows = selected_match_data.get('HomeYellowsResults')
+            away_yellows = selected_match_data.get('AwayYellowsResults')
+            display_stat_row("Yellow Cards", home_yellows, away_yellows)
+
+            # Red Cards - No special format
+            home_reds = selected_match_data.get('HomeRedsResults')
+            away_reds = selected_match_data.get('AwayRedsResults')
+            display_stat_row("Red Cards", home_reds, away_reds)
 
     with match_cols4:
         # --- Column 6: Score Display ---
@@ -2039,7 +2138,6 @@ else:
             unsafe_allow_html=True
         )
 
-
     with match_cols5:
         # --- Column 4: Text, Right-aligned ---
         st.markdown(
@@ -2052,6 +2150,7 @@ else:
             """,
             unsafe_allow_html=True
         )
+    
     with match_cols6:
         # --- Column 5: Image, Left-aligned ---
         # Default alignment for image is left. Ensure fixed width.
@@ -2070,20 +2169,146 @@ else:
     
     st.markdown("---")
     confidence_score = selected_match_data.get('confidence_score', '--')
+    confidence_text = f" ({confidence_score}/10)" if confidence_score is not None else ""
+    home_goals = selected_match_data.get('HomeGoals', '?')
+    away_goals = selected_match_data.get('AwayGoals', '?')
+    corners = selected_match_data.get('Corners') # Get corners count
+    home_team = selected_match_data.get('home_team', '?')
+    away_team = selected_match_data.get('away_team', '?')
+    rec_pred = selected_match_data.get('rec_prediction')
+    value_bet = selected_match_data.get('value_bets')
+    match_time = selected_match_data.get('time', '--')
+    
+    Last5_HomeBothTeamsToScore = selected_match_data.get('Last5_HomeBothTeamsToScore', '--')*100
+    Last5HomeAvergeTotalShots = selected_match_data.get('Last5HomeAvergeTotalShots') or 0                   
+    Last5HomeAvergeTotalShotsOnGoal = selected_match_data.get('Last5HomeAvergeTotalShotsOnGoal') or 0            
+    Last5HomeAvergeTotalFouls = selected_match_data.get('Last5HomeAvergeTotalFouls') or 0
+    Last5HomeAvergeTotalcorners  = selected_match_data.get('Last5HomeAvergeTotalcorners') or 0                
+    Last5HomeAvergeTotalYellowCards  = selected_match_data.get('Last5HomeAvergeTotalYellowCards') or 0
+    # Last5HomeAvergeTotalRedCards  = selected_match_data.get('Last5HomeAvergeTotalRedCards') or 0  
+
+    Last5_AwayBothTeamsToScore = selected_match_data.get('Last5_AwayBothTeamsToScore', '--') *100               
+    Last5AwayAvergeTotalShots = selected_match_data.get('Last5AwayAvergeTotalShots') or 0                  
+    Last5AwayAvergeTotalShotsOnGoal = selected_match_data.get('Last5AwayAvergeTotalShotsOnGoal') or 0            
+    Last5AwayAvergeTotalFouls = selected_match_data.get('Last5AwayAvergeTotalFouls') or 0 
+    Last5AwayAvergeTotalcorners  = selected_match_data.get('Last5AwayAvergeTotalcorners') or 0                
+    Last5AwayAvergeTotalYellowCards  = selected_match_data.get('Last5AwayAvergeTotalYellowCards') or 0            
+    # Last5AwayAvergeTotalRedCards  = selected_match_data.get('Last5AwayAvergeTotalRedCards') or 0            
+
+    l5_home_for_league_avg_shots = selected_match_data.get('l5_home_for_league_avg_shots') or 0               
+    l5_home_for_league_avg_sot = selected_match_data.get('l5_home_for_league_avg_sot') or 0                 
+    l5_home_for_league_avg_fouls = selected_match_data.get('l5_home_for_league_avg_fouls') or 0               
+    l5_home_for_league_avg_corners = selected_match_data.get('l5_home_for_league_avg_corners') or 0             
+    l5_home_for_league_avg_yellow_cards = selected_match_data.get('l5_home_for_league_avg_yellow_cards') or 0        
+    l5_home_for_league_avg_red_cards = selected_match_data.get('l5_home_for_league_avg_red_cards') or 0
+
+    l5_home_against_league_avg_shots = selected_match_data.get('l5_home_against_league_avg_shots') or 0           
+    l5_home_against_league_avg_sot = selected_match_data.get('l5_home_against_league_avg_sot') or 0             
+    l5_home_against_league_avg_corners = selected_match_data.get('l5_home_against_league_avg_corners') or 0         
+    l5_home_against_league_avg_fouls = selected_match_data.get('l5_home_against_league_avg_fouls') or 0           
+    l5_home_against_league_avg_yellow_cards = selected_match_data.get('l5_home_against_league_avg_yellow_cards') or 0    
+    l5_home_against_league_avg_red_cards = selected_match_data.get('l5_home_against_league_avg_red_cards') or 0
+    
+    l5_away_for_league_avg_shots = selected_match_data.get('l5_away_for_league_avg_shots') or 0               
+    l5_away_for_league_avg_sot = selected_match_data.get('l5_away_for_league_avg_sot') or 0                 
+    l5_away_for_league_avg_fouls = selected_match_data.get('l5_away_for_league_avg_fouls') or 0               
+    l5_away_for_league_avg_corners = selected_match_data.get('l5_away_for_league_avg_corners') or 0             
+    l5_away_for_league_avg_yellow_cards = selected_match_data.get('l5_away_for_league_avg_yellow_cards') or 0        
+    l5_away_for_league_avg_red_cards = selected_match_data.get('l5_away_for_league_avg_red_cards') or 0
+
+    l5_away_against_league_avg_shots = selected_match_data.get('l5_away_against_league_avg_shots') or 0           
+    l5_away_against_league_avg_sot = selected_match_data.get('l5_away_against_league_avg_sot') or 0             
+    l5_away_against_league_avg_corners = selected_match_data.get('l5_away_against_league_avg_corners') or 0         
+    l5_away_against_league_avg_fouls = selected_match_data.get('l5_away_against_league_avg_fouls') or 0           
+    l5_away_against_league_avg_yellow_cards = selected_match_data.get('l5_away_against_league_avg_yellow_cards') or 0    
+    l5_away_against_league_avg_red_cards = selected_match_data.get('l5_away_against_league_avg_red_cards') or 0
+
+    HeadToHeadHomeXG = selected_match_data.get('HeadToHeadHomeXG') or 0
+    HeadToHeadAwayXG = selected_match_data.get('HeadToHeadAwayXG') or 0 
+    HeadToHeadHomeTotalShots = selected_match_data.get('HeadToHeadHomeTotalShots') or 0
+    HeadToHeadHomeShotsOnTarget = selected_match_data.get('HeadToHeadHomeShotsOnTarget') or 0
+    HeadToHeadHomeFouls = selected_match_data.get('HeadToHeadHomeFouls') or 0
+    HeadToHeadHomeCorners = selected_match_data.get('HeadToHeadHomeCorners') or 0
+    HeadToHeadHomeYellowCards = selected_match_data.get('HeadToHeadHomeYellowCards') or 0
+    HeadToHeadHomeRedCards = selected_match_data.get('HeadToHeadHomeRedCards') or 0
+    
+    HeadToHeadAwayTotalShots = selected_match_data.get('HeadToHeadAwayTotalShots') or 0
+    HeadToHeadAwayShotsOnTarget = selected_match_data.get('HeadToHeadAwayShotsOnTarget') or 0
+    HeadToHeadAwayFouls = selected_match_data.get('HeadToHeadAwayFouls') or 0
+    HeadToHeadAwayCorners = selected_match_data.get('HeadToHeadAwayCorners') or 0
+    HeadToHeadAwayYellowCards = selected_match_data.get('HeadToHeadAwayYellowCards') or 0
+    HeadToHeadAwayRedCards = selected_match_data.get('HeadToHeadAwayRedCards') or 0
+
+    Last5HomeOver7Corners = (selected_match_data.get('Last5HomeOver7Corners') or 0)*100
+    Last5HomeOver8Corners = (selected_match_data.get('Last5HomeOver8Corners') or 0)*100
+    Last5HomeOver9Corners = (selected_match_data.get('Last5HomeOver9Corners') or 0)*100
+    Last5HomeOver10Corners = (selected_match_data.get('Last5HomeOver10Corners') or 0)*100
+    Last5HomeAvergeTotalYellowCards = selected_match_data.get('Last5HomeAvergeTotalYellowCards') or 0
+    Last5HomeOver1YellowCards = (selected_match_data.get('Last5HomeOver1YellowCards') or 0)*100
+    Last5HomeOver2YellowCards = (selected_match_data.get('Last5HomeOver2YellowCards') or 0)*100
+    Last5HomeOver3YellowCards = (selected_match_data.get('Last5HomeOver3YellowCards') or 0)*100
+    Last5HomeOver4YellowCards = (selected_match_data.get('Last5HomeOver4YellowCards') or 0)*100
+    Last5HomeAvergeTotalRedCards = selected_match_data.get('Last5HomeAvergeTotalRedCards') or 0
+
+    Last5AwayOver7Corners = (selected_match_data.get('Last5AwayOver7Corners') or 0)*100
+    Last5AwayOver8Corners = (selected_match_data.get('Last5AwayOver8Corners') or 0)*100
+    Last5AwayOver9Corners = (selected_match_data.get('Last5AwayOver9Corners') or 0)*100
+    Last5AwayOver10Corners = (selected_match_data.get('Last5AwayOver10Corners') or 0)*100
+    Last5AwayAvergeTotalYellowCards = selected_match_data.get('Last5AwayAvergeTotalYellowCards') or 0
+    Last5AwayOver1YellowCards = (selected_match_data.get('Last5AwayOver1YellowCards') or 0)*100
+    Last5AwayOver2YellowCards = (selected_match_data.get('Last5AwayOver2YellowCards') or 0)*100
+    Last5AwayOver3YellowCards = (selected_match_data.get('Last5AwayOver3YellowCards') or 0)*100
+    Last5AwayOver4YellowCards = (selected_match_data.get('Last5AwayOver4YellowCards') or 0)*100
+    Last5AwayAvergeTotalRedCards = selected_match_data.get('Last5AwayAvergeTotalRedCards') or 0
+
+    l5_league_avg_btts = (selected_match_data.get('l5_league_avg_btts') or 0)*100
+    l5HomeLeagueCleanSheet = selected_match_data.get('l5HomeLeagueCleanSheet') or 0
+    l5AwayLeagueCleanSheet = selected_match_data.get('l5AwayLeagueCleanSheet') or 0
+    
+    pred_display = ""
+    rec_pred_won = check_prediction_success(rec_pred, home_goals, away_goals, corners, home_team, away_team)
+    if rec_pred:
+        pred_display = f"{rec_pred}{confidence_text}"
+        if rec_pred_won:
+            pred_display = f"{rec_pred}{confidence_text} ✅" #<span style='color:green; font-size=1.5em font-weight:bold;'></span>" # Added checkmark
+        # st.caption(f"**Best Bet:** {pred_display}", unsafe_allow_html=True)
+        # st.success(f"**Best Bet:** {pred_display}")
+
+    # else:
+    #     st.caption("")
+        
+    # --- Check and Display Value Tip ---
+    # Pass necessary stats to the check function
+    value_display = ""
+    value_bet_won = check_prediction_success(value_bet, home_goals, away_goals, corners, home_team, away_team)
+    if value_bet:
+        value_display = f"{value_bet}"
+        if value_bet_won:
+            value_display = f"{value_bet} ✅" #<span style='color:green; font-weight:bold;'></span>" # Added checkmark
+        # st.caption(f"**Value Tip:** {value_display}", unsafe_allow_html=True)
+    # else:
+    #     st.caption("")
 
     if confidence_score != '--' and not pd.isna(confidence_score):
         confidence_score = int(confidence_score)
 
     pred_cols1,pred_cols2,pred_cols3,pred_cols4 = st.columns([1,2,2,3])
     pred_cols1.metric("Overall Confidence", f"{confidence_score}")#/10
-    pred_cols2.success(f"**Best Bet:** {selected_match_data.get('rec_prediction', '--')}")
-    pred_cols3.warning(f"**Value Bets:** `{selected_match_data.get('value_bets', '--')}`")
+    pred_cols2.success(f"**Best Bet:** {pred_display}")
+    pred_cols3.warning(f"**Value Bets:** {value_display}")
     pred_cols4.info(f"**Advice:** {selected_match_data.get('advice', '--')}")
 
     # --- Tabs for Detailed Stats (Added Recommendations Tab) ---
     tab_titles = ["🎯 Recommendations", "📈 Performance & Goals", "🤝 H2H", "✨ Insights"]
     tabs = st.tabs(tab_titles)
 
+    # Match report 
+    # with tabs[0]:
+        # st.markdown("#### ⭐ Prediction Overview")
+        # Retrieve and display each stat using the helper function
+        
+
+        # st.markdown("---") # Divider after the report
     # Recommendations Tab (New)
     with tabs[0]:
         st.markdown("#### ⭐ Prediction Overview")
@@ -2092,34 +2317,58 @@ else:
             
             st.metric("Overall Confidence", f"{confidence_score}") #/10
         with rec_col2:
-            st.success(f"**Best Bet:** {selected_match_data.get('rec_prediction', '--')}")
+            st.success(f"**Best Bet:** {pred_display}")
         #      st.info(f"**Advice:** {selected_match_data.get('advice', '--')}")
         #      st.warning(f"**Value Bets:** `{selected_match_data.get('value_bets', '--')}`")
-
+        # --- Check and Display Best Bet ---
+        # Pass necessary stats to the check function      
         st.markdown("---")
         st.markdown("##### Detailed Predictions")
         pred_col1, pred_col2, pred_col3 = st.columns(3)
         with pred_col1:
+            outcome_display = ""
             outcome_conf = selected_match_data.get('pred_outcome_conf')
             outcome_val = selected_match_data.get('pred_outcome', '--')
-            st.metric("Outcome", outcome_val, f"{outcome_conf}/10" if outcome_conf is not None else None)
+            outcome_bet_won = check_prediction_success(outcome_val, home_goals, away_goals, corners, home_team, away_team)
+            if outcome_val:
+                outcome_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val}</span>"
+                if outcome_bet_won:
+                    outcome_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val} ✅</span>" #color:green; 
+                
+            st.markdown("Match Outcome:") # f"{outcome_conf}/10" if outcome_conf is not None else None)
+            st.markdown(f"{outcome_display}", unsafe_allow_html=True) # f"{outcome_conf}/10" if outcome_conf is not None else None)
         with pred_col2:
+            goals_display = ""
             goals_conf = selected_match_data.get('pred_goals_conf')
             goals_val = selected_match_data.get('pred_goals', '--')
-            st.metric("Goals (O/U)", goals_val, f"{goals_conf}/10" if goals_conf is not None else None)
+            goals_bet_won = check_prediction_success(goals_val, home_goals, away_goals, corners, home_team, away_team)
+            if goals_val:
+                goals_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{goals_val}</span>"
+                if goals_bet_won:
+                    goals_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{goals_val} ✅</span>" #color:green; 
+                
+            st.markdown("Goals (O/U):") # f"{outcome_conf}/10" if outcome_conf is not None else None)
+            st.markdown(f"{goals_display}", unsafe_allow_html=True) #, f"{goals_conf}/10" if goals_conf is not None else None)
         with pred_col3:
+            corners_display = ""
             corners_conf = selected_match_data.get('pred_corners_conf')
             corners_val = selected_match_data.get('pred_corners', '--')
+            corners_bet_won = check_prediction_success(corners_val, home_goals, away_goals, corners, home_team, away_team)
             # Check if corner prediction is meaningful before showing
-            if corners_val and corners_val.lower() not in ['--', 'no strong corner signal', '']:
-                st.metric("Corners (O/U)", corners_val, f"{corners_conf}/10" if corners_conf is not None else None)
-            else:
-                st.text("No strong corner prediction.")
+            if corners_val:
+                corners_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{corners_val}</span>"
+                if corners_bet_won:
+                    corners_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{corners_val} ✅</span>" #color:green; 
+                
+            st.markdown("Corners (O/U):") # f"{outcome_conf}/10" if outcome_conf is not None else None)
+            st.markdown(f"{corners_display}", unsafe_allow_html=True)
+        
         st.markdown("---")
         st.markdown("##### Expected Value")
         ev_h = f"{selected_match_data.get('exp_val_h') * 100:.2f}%" if selected_match_data.get('exp_val_h') is not None else None
         ev_d = f"{selected_match_data.get('exp_val_d') * 100:.2f}%" if selected_match_data.get('exp_val_d') is not None else None
         ev_a = f"{selected_match_data.get('exp_val_a') * 100:.2f}%" if selected_match_data.get('exp_val_a') is not None else None
+        
         pred_col4, pred_col5, pred_col6 = st.columns(3)
         if any([ev_h, ev_d, ev_a]):
             with pred_col4:
@@ -2140,6 +2389,15 @@ else:
         st.markdown("#### Performance & Form - Last 5 Games")
         # ... (Keep existing Performance tab code, ensuring .get() is used) ...
         home_col1, away_col2 = st.columns(2)
+
+        home_btts_delta = Last5_HomeBothTeamsToScore - l5_league_avg_btts
+        away_btts_delta = Last5_AwayBothTeamsToScore - l5_league_avg_btts
+
+        ppg_h = selected_match_data.get('ppg_h')
+        ppg_h_all = selected_match_data.get('ppg_h_all')
+        ppg_a = selected_match_data.get('ppg_a')
+        ppg_a_all = selected_match_data.get('ppg_a_all')
+
         with home_col1:
             st.markdown(f"**{selected_match_data.get('home_team','?')} (Home)**")
             form_home = colorize_performance(selected_match_data.get('form_home', '--'))#.split('//')r
@@ -2153,221 +2411,153 @@ else:
 
             # st.caption(f"**Home Form:** `{selected_match_data.get('form_home', '--')}`")
             # st.caption(f"**Overall Form:** `{selected_match_data.get('all_form_home', '--')}`")
-            ppg_h = f"{selected_match_data.get('ppg_h')}/game"
-            ppg_h_all = f"{selected_match_data.get('ppg_h_all')}/game"
+            
             delta_h_str = f"{ppg_h_all} (All)" if ppg_h_all is not None else None
+
+            clean_sheet_h = int(selected_match_data.get('clean_sheet_h', '--')*100)
+
+            l5hometotalshots_delta = Last5HomeAvergeTotalShots - l5_home_for_league_avg_shots
+            l5homesot_delta = Last5HomeAvergeTotalShotsOnGoal - l5_home_for_league_avg_sot
+            lshomefouls_delta = Last5HomeAvergeTotalFouls - l5_home_for_league_avg_fouls
+            l5hometotalcorner_delta = Last5HomeAvergeTotalcorners - l5_home_for_league_avg_corners
+            l5hometotalyellows_delta = Last5HomeAvergeTotalYellowCards - l5_home_for_league_avg_yellow_cards
+            # l5hometotalreds_delta = Last5HomeAvergeTotalRedCards - l5_home_for_league_avg_red_cards
+            l5homeCS_delta = clean_sheet_h - l5HomeLeagueCleanSheet
+
             win_cols_h = st.columns(2)
-            win_cols_h[0].metric(label="PPG (Home)", value=ppg_h if ppg_h is not None else "--")
-            win_cols_h[1].metric(label="PPG (Home)", value=ppg_h_all if ppg_h_all is not None else "--")
-            st.metric(label="Clean Sheet %", value=f"{int(selected_match_data.get('clean_sheet_h', '--')*100)}%")
+            
             wr_h_text = selected_match_data.get('win_rates_h', 'HT: 0% | FT: 0%')
             ht_wr_h = int(selected_match_data.get('ht_win_rates_h', '--') * 100) if selected_match_data.get('ht_win_rates_h', '--') is not None else 0 # parse_specific_percent(wr_h_text, 'HT', 0)
             ft_wr_h = int(selected_match_data.get('ft_win_rates_h', '--') * 100) if selected_match_data.get('ft_win_rates_h', '--') is not None else 0 # parse_specific_percent(wr_h_text, 'FT', 0)
+
+            try: 
+                ppg_home_delta = ppg_h - ppg_a
+                ppg_home_overall_delta = ppg_h_all - ppg_a_all
+            except ValueError:
+                ppg_home_delta = 0
+                ppg_home_overall_delta = 0
+            
+            win_cols_h[0].metric(label="PPG (Home)", value=f"{ppg_h}/game" if ppg_h is not None else "--",delta=f"{round(ppg_home_delta,2)} vs Opponent PPG ({ppg_a})")
+            win_cols_h[1].metric(label="PPG (Overall)", value=f"{ppg_h_all}/game" if ppg_h_all is not None else "--",delta=f"{round(ppg_home_overall_delta,2)} vs Opponent Overall PPG ({ppg_a_all})")
+            
             win_cols_h[0].metric("Win Rate HT %", f"{ht_wr_h}%")
             win_cols_h[1].metric("Win Rate FT %", f"{ft_wr_h}%")
+            
+            win_cols_h[0].metric("GG",f"{round(Last5_HomeBothTeamsToScore)}%",f"{round(home_btts_delta)}% league avg ({round(l5_league_avg_btts)}%)") #leagues average delata
+            win_cols_h[1].metric(label="Clean Sheet %", value=f"{round(clean_sheet_h*100)}%",delta=f"{round(l5homeCS_delta*100)}% league avg ({round(l5HomeLeagueCleanSheet*100)}%)") #nleague average clean sheet
+
+            win_cols_h[0].metric("Total Shots",Last5HomeAvergeTotalShots,f"{round(l5hometotalshots_delta,2)} league avg({round(l5_home_for_league_avg_shots,2)}).")
+            win_cols_h[1].metric("Shots on Goal",Last5HomeAvergeTotalShotsOnGoal,f"{round(l5homesot_delta,2)} league avg({round(l5_home_for_league_avg_sot,2)}).")
+
+            win_cols_h[0].metric("Fouls",Last5HomeAvergeTotalFouls,f"{round(lshomefouls_delta,2)} league avg({round(l5_home_for_league_avg_fouls,2)}).","inverse")
+            
+            win_cols_h[1].metric("Total Corners",Last5HomeAvergeTotalcorners,f"{round(l5hometotalcorner_delta,2)} league avg({round(l5_home_for_league_avg_corners,2)}).")
+            win_cols_h[0].metric("Total Yellows",Last5HomeAvergeTotalYellowCards,f"{round(l5hometotalyellows_delta,2)} league avg({round(l5_home_for_league_avg_yellow_cards,2)}).","inverse")
+        
+            # win_cols_h[1].metric("Total Reds",Last5HomeAvergeTotalRedCards,f"{round(l5hometotalreds_delta,2)} league avg.")
+
         with away_col2:
             st.markdown(f"**{selected_match_data.get('away_team','?')} (Away)**")
             form_away = colorize_performance(selected_match_data.get('form_away', '--'))#.split('//')r
             all_form_away = colorize_performance(selected_match_data.get('all_form_away', '--'))#.split('//')
             # if len(all_form_away) > 1:
+            clean_sheet_a = int(selected_match_data.get('clean_sheet_a', '--')*100)
+            l5AwayCS_delta = clean_sheet_a - l5AwayLeagueCleanSheet
+            
             form_cols_a = st.columns(2)
+            
             form_cols_a[0].metric("Form (A)", form_away)#[0]
             form_cols_a[1].metric("Form (Overall)",all_form_away)#[1]
             # st.caption(f"**Form (A/All):** `{selected_match_data.get('form_away', '--')}`")
-            ppg_a = f"{selected_match_data.get('ppg_a')}/game"
-            ppg_a_all = f"{selected_match_data.get('ppg_a_all')}/game"
+            
             delta_a_str = f"{ppg_a_all} (All)" if ppg_a_all is not None else None
-            win_cols_a = st.columns(2)
-            win_cols_a[0].metric(label="PPG (Away)", value=ppg_a if ppg_a is not None else "--")
-            win_cols_a[1].metric(label="PPG (Away)", value=ppg_a_all if ppg_a_all is not None else "--")
-            st.metric(label="Clean Sheet %", value=f"{int(selected_match_data.get('clean_sheet_a', '--')*100)}%")
+        
+            l5awaytotalshots_delta = Last5AwayAvergeTotalShots - l5_away_for_league_avg_shots
+            l5awaysot_delta = Last5AwayAvergeTotalShotsOnGoal - l5_away_for_league_avg_sot
+            l5awayfouls_delta = Last5AwayAvergeTotalFouls - l5_away_for_league_avg_fouls 
+            l5awaytotalcorner_delta = Last5AwayAvergeTotalcorners - l5_away_for_league_avg_corners 
+            l5awaytotalyellows_delta = Last5AwayAvergeTotalYellowCards - l5_away_for_league_avg_yellow_cards 
+            # l5awaytotalreds_delta = Last5AwayAvergeTotalRedCards - l5_away_for_league_avg_red_cards 
+            
+            ppg_away_delta = ppg_a - ppg_h
+            ppg_away_overall_delta = ppg_a_all - ppg_h_all
+
             wr_a_text = selected_match_data.get('win_rates_a', 'HT: 0% | FT: 0%')
             ht_wr_a = int(selected_match_data.get('ht_win_rates_a', '--') * 100) if selected_match_data.get('ht_win_rates_a', '--') is not None else 0 # parse_specific_percent(wr_a_text, 'HT', 0)
             ft_wr_a = int(selected_match_data.get('ft_win_rates_a', '--') * 100) if selected_match_data.get('ft_win_rates_a', '--') is not None else 0 # parse_specific_percent(wr_a_text, 'FT', 0)
+            
+            win_cols_a = st.columns(2)
+            win_cols_a[0].metric(label="PPG (Away)", value=f"{ppg_a}/game" if ppg_a is not None else "--",delta=f"{round(ppg_away_delta,2)} vs Opponent PPG ({ppg_h})")
+            win_cols_a[1].metric(label="PPG (Overall)", value=f"{ppg_a_all}/game" if ppg_a_all is not None else "--",delta=f"{round(ppg_away_overall_delta,2)} vs Opponent Overall PPG ({ppg_h_all})")
+            
             win_cols_a[0].metric("Win Rate HT %", f"{ht_wr_a}%")
             win_cols_a[1].metric("Win Rate FT %", f"{ft_wr_a}%")
+
+            win_cols_a[0].metric("GG",f"{int(Last5_AwayBothTeamsToScore)}%",f"{away_btts_delta}% league avg ({l5_league_avg_btts}%)")
+            win_cols_a[1].metric(label="Clean Sheet %", value=f"{round(clean_sheet_a*100)}%",delta=f"{round(l5AwayCS_delta*100)}% league avg ({l5AwayLeagueCleanSheet*100}%)")
+            
+            win_cols_a[0].metric("Total Shots",Last5AwayAvergeTotalShots,f"{round(l5awaytotalshots_delta,2)} league avg({round(l5_away_for_league_avg_shots,2)}).")
+            win_cols_a[1].metric("Shots on Goal",Last5AwayAvergeTotalShotsOnGoal,f"{round(l5awaysot_delta,2)} league avg({round(l5_away_for_league_avg_sot,2)}).")
+
+            win_cols_a[0].metric("Fouls",Last5AwayAvergeTotalFouls,f"{round(l5awayfouls_delta,2)} league avg({round(l5_away_for_league_avg_fouls,2)}).","inverse")
+            
+            win_cols_a[1].metric("Total Corners",Last5AwayAvergeTotalcorners,f"{round(l5awaytotalcorner_delta,2)} league avg ({round(l5_away_for_league_avg_corners,2)}).")
+            
+            win_cols_a[0].metric("Total Yellows",Last5AwayAvergeTotalYellowCards,f"{round(l5awaytotalyellows_delta,2)} league avg({round(l5_away_for_league_avg_yellow_cards,2)}).","inverse")
+            # win_cols_h[1].metric("Total Reds",Last5AwayAvergeTotalRedCards,f"{round(l5awaytotalreds_delta,2)} league avg.")
+
         st.markdown("---") # Separator
 
     # Goals Tab
     # with tabs[2]:
-        st.markdown("#### Goal Statistics")
-        st.markdown("**Average Goals Scored vs Conceded per Game**")
-        try:
-            # Prepare data in a 'long' format suitable for Altair color mapping
-            home_team_label = selected_match_data.get('home_team', 'Home')
-            away_team_label = selected_match_data.get('away_team', 'Away')
-            # Use abbreviations for potentially long labels
-            home_abbr = "".join([word[0] for word in home_team_label.split()[:2]])
-            away_abbr = "".join([word[0] for word in away_team_label.split()[:2]])
+        g_stats_cols = st.columns(2)
+
+        with g_stats_cols[0]:
+            st.markdown("#### Goal Statistics")
+            st.markdown("**Average Goals Scored vs Conceded per Game**")
+            try:
+                # Prepare data in a 'long' format suitable for Altair color mapping
+                home_team_label = selected_match_data.get('home_team', 'Home')
+                away_team_label = selected_match_data.get('away_team', 'Away')
+                # Use abbreviations for potentially long labels
+                home_abbr = "".join([word[0] for word in home_team_label.split()[:2]])
+                away_abbr = "".join([word[0] for word in away_team_label.split()[:2]])
 
 
-            goals_h = float(selected_match_data.get('goals_h', 0.0))
-            conc_h = float(selected_match_data.get('conceded_h', 0.0))
-            goals_a = float(selected_match_data.get('goals_a', 0.0))
-            conc_a = float(selected_match_data.get('conceded_a', 0.0))
+                goals_h = float(selected_match_data.get('goals_h', 0.0))
+                conc_h = float(selected_match_data.get('conceded_h', 0.0))
+                goals_a = float(selected_match_data.get('goals_a', 0.0))
+                conc_a = float(selected_match_data.get('conceded_a', 0.0))
 
-            # Create list of dictionaries for DataFrame
-            goal_data_long = [
-                {'Metric': f"{home_team_label} Scored", 'Value': goals_h, 'TeamType': 'Home'},
-                {'Metric': f"{away_team_label} Scored", 'Value': goals_a, 'TeamType': 'Away'},
-                {'Metric': f"{home_team_label} Conceded", 'Value': conc_h, 'TeamType': 'Home'},
-                {'Metric': f"{away_team_label} Conceded", 'Value': conc_a, 'TeamType': 'Away'}
-            ]
-            goal_df_long = pd.DataFrame(goal_data_long)
-
-            # Define specific colors
-            home_color = "#5e993c" #8bc34a" # Light Green
-            away_color = "#c47704" #ff9800" # Orange
-
-            # 1. Base chart definition (common encoding)
-            base = alt.Chart(goal_df_long).encode(
-                x=alt.X('Metric', sort=None, title=None, axis=alt.Axis(labelAngle=0)), # Keep defined order, remove axis title
-                y=alt.Y('Value', title="Goals per Game"),
-                color=alt.Color('TeamType',
-                                scale=alt.Scale(domain=['Home', 'Away'], range=[home_color, away_color]),
-                                legend=alt.Legend(title="Team")
-                            ),
-                tooltip=['Metric', alt.Tooltip('Value', format='.2f')] # Format tooltip value
-            )
-
-            # 2. Bar layer
-            bar_chart = base.mark_bar()
-
-            # 3. Text layer for labels
-            text_labels = base.mark_text(
-                align='center',
-                baseline='bottom',
-                dy=-5,  # Adjust vertical offset slightly above the bar
-                # Optional: Change text color for better visibility if needed
-                # color='black'
-            ).encode(
-                # Encode the text channel with the 'Value', formatted to 2 decimal places
-                text=alt.Text('Value', format='.2f'),
-                # Important: Remove color encoding from text or set explicitly if needed,
-                # otherwise text might inherit bar colors making it hard to read on some backgrounds.
-                # Let's remove it here to default to black/dark text.
-                color=alt.value('black') # Force text color or remove the line altogether for default
-            )
-
-            # 4. Combine the layers
-            final_chart = (bar_chart + text_labels).properties(
-                # title='Avg Goals Scored/Conceded' # Optional title
-            ).interactive()
-
-            # Display using st.altair_chart
-            st.altair_chart(final_chart, use_container_width=True)
-
-        except (ValueError, TypeError, KeyError, ImportError) as e:
-            # Catch ImportError if altair isn't installed
-            st.caption(f"Could not plot goal averages: {e}")
-            if isinstance(e, ImportError):
-                st.warning("Please install altair: pip install altair")
-
-        st.markdown("---") # Separator
-        
-        # --- NEW: Actual vs Expected Goals (xG) Visualization ---
-        st.markdown("#### xG Statistics")
-        try:
-            # Get data, providing defaults and converting safely
-            home_team_label = selected_match_data.get('home_team', 'Home')
-            away_team_label = selected_match_data.get('away_team', 'Away')
-
-            g_h = selected_match_data.get('goals_h') # Home GS
-            xg_h = selected_match_data.get('xg_h') # Home xG
-            c_h = selected_match_data.get('conceded_h') # Home conceded = Opponent goals
-            xga_h = selected_match_data.get('xga_h') # Home xGA = Opponent xG
-
-            g_a = selected_match_data.get('goals_a') # Away GS
-            xg_a = selected_match_data.get('xg_a') # Away xG
-            c_a = selected_match_data.get('conceded_a') # Away conceded = Opponent goals
-            xga_a = selected_match_data.get('xga_a') # Away xGA = Opponent xG
-
-            # Check if all necessary values are present and numeric
-            if all(v is not None for v in [g_h, xg_h, c_h, xga_h, g_a, xg_a, c_a, xga_a]):
-                # Convert to float after check
-                g_h, xg_h, c_h, xga_h = float(g_h), float(xg_h), float(c_h), float(xga_h)
-                g_a, xg_a, c_a, xga_a = float(g_a), float(xg_a), float(c_a), float(xga_a)
-
-                # Prepare data for GROUPED bar chart
-                xg_data = pd.DataFrame({
-                    # Columns define the bars within each group
-                    'Actual': [g_h, c_h, g_a, c_a],
-                    'Expected': [xg_h, xga_h, xg_a, xga_a]
-                },
-                    # Index defines the groups on the x-axis
-                    index=[f"{home_team_label} Attack", 
-                            f"{home_team_label} Defense",
-                            f"{away_team_label} Attack", 
-                            f"{away_team_label} Defense"]
-                )
-
-                xg_data_reset = xg_data.reset_index()
-                xg_data_reset = xg_data_reset.rename(columns={'index': 'Category'}) # Rename for clarity
-
-                # Melt the dataframe to long format
-                xg_data_long = pd.melt(
-                    xg_data_reset,
-                    id_vars=['Category'],            # Column(s) to keep as identifiers
-                    var_name='MetricType',         # Name for the new column ('Actual', 'Expected')
-                    value_name='Goals'             # Name for the new column with values
-                )
-
-                # Add a 'Location' column based on the Category string
-                def get_location(category_name):
-                    if home_team_label in category_name:
-                        return "Home"
-                    elif away_team_label in category_name:
-                        return "Away"
-                    else:
-                        return "Unknown" # Fallback
-
-                xg_data_long['Location'] = xg_data_long['Category'].apply(get_location)
-
-                # Optional: Define a specific sort order for the x-axis categories
-                category_order = [
-                    f"{home_team_label} Attack", f"{home_team_label} Defense",
-                    f"{away_team_label} Attack", f"{away_team_label} Defense"
+                # Create list of dictionaries for DataFrame
+                goal_data_long = [
+                    {'Metric': f"{home_team_label} Scored", 'Value': goals_h, 'TeamType': 'Home'},
+                    {'Metric': f"{away_team_label} Scored", 'Value': goals_a, 'TeamType': 'Away'},
+                    {'Metric': f"{home_team_label} Conceded", 'Value': conc_h, 'TeamType': 'Home'},
+                    {'Metric': f"{away_team_label} Conceded", 'Value': conc_a, 'TeamType': 'Away'}
                 ]
+                goal_df_long = pd.DataFrame(goal_data_long)
 
-                # --- 2. Create the Altair Chart ---
-                # st.subheader("Altair Grouped Bar Chart with Home/Away Colors")
+                # Define specific colors
+                home_color = "#5e993c" #8bc34a" # Light Green
+                away_color = "#c47704" #ff9800" # Orange
 
-                chart = alt.Chart(xg_data_long).mark_bar().encode(
-                    # X-axis: The main categories (Attack/Defense)
-                    x=alt.X('Category:N',  # N for Nominal (categorical)
-                            sort=category_order, # Apply custom sort order
-                            axis=alt.Axis(title=None, labelAngle=0)), # Horizontal labels, no axis title
-
-                    # Y-axis: The goal values
-                    y=alt.Y('Goals:Q',  # Q for Quantitative
-                            axis=alt.Axis(title='Goals (Actual vs Expected)')),
-
-                    # Color: Differentiate based on Home/Away
-                    color=alt.Color('Location:N',
-                                    scale=alt.Scale(domain=['Home', 'Away'],
-                                    range=['#5e993c', '#c47704']), # Example colors (blue, orange)
-                                    legend=alt.Legend(title="Location")),
-
-                    # Column or xOffset for Grouping: Place 'Actual' and 'Expected' side-by-side
-                    # Using xOffset places them tightly grouped on the main x-axis category
-                    xOffset=alt.XOffset('MetricType:N', # Group by Actual/Expected
-                                    # Optional: Add title to the offset grouping legend
-                                    # axis=alt.Axis(title="Metric Type")
-                                    ),
-
-                    # Tooltips for interactivity
-                    tooltip=[
-                        alt.Tooltip('Category', title='Focus'),
-                        alt.Tooltip('MetricType', title='Metric'),
-                        alt.Tooltip('Goals', format='.2f'), # Format goals to 2 decimal places
-                        alt.Tooltip('Location')
-                    ]
+                # 1. Base chart definition (common encoding)
+                base = alt.Chart(goal_df_long).encode(
+                    x=alt.X('Metric', sort=None, title=None, axis=alt.Axis(labelAngle=0)), # Keep defined order, remove axis title
+                    y=alt.Y('Value', title="Goals per Game"),
+                    color=alt.Color('TeamType',
+                                    scale=alt.Scale(domain=['Home', 'Away'], range=[home_color, away_color]),
+                                    legend=alt.Legend(title="Team")
+                                ),
+                    tooltip=['Metric', alt.Tooltip('Value', format='.2f')] # Format tooltip value
                 )
+
                 # 2. Bar layer
-                bar_chart = chart.mark_bar()
+                bar_chart = base.mark_bar()
 
                 # 3. Text layer for labels
-                text_labels = chart.mark_text(
+                text_labels = base.mark_text(
                     align='center',
                     baseline='bottom',
                     dy=-5,  # Adjust vertical offset slightly above the bar
@@ -2389,27 +2579,148 @@ else:
 
                 # Display using st.altair_chart
                 st.altair_chart(final_chart, use_container_width=True)
-            else:
-                st.caption("xG/xGA data incomplete or missing, cannot plot comparison chart.")
-                # Optionally display raw values if available
-                xg_col1, xg_col2 = st.columns(2)
-                with xg_col1:
-                     st.caption(f"**xG (H):** {selected_match_data.get('xg_h', '--')} | **xGA (H):** {selected_match_data.get('xga_h', '--')}")
-                with xg_col2:
-                    st.caption(f"**xG (A):** {selected_match_data.get('xg_a', '--')} | **xGA (A):** {selected_match_data.get('xga_a', '--')}")
 
-        except (ValueError, TypeError, KeyError) as e:
-            st.caption(f"Could not plot xG comparison chart: {e}")
-        # --- End xG Visualization ---
-        st.markdown("---")
+            except (ValueError, TypeError, KeyError, ImportError) as e:
+                # Catch ImportError if altair isn't installed
+                st.caption(f"Could not plot goal averages: {e}")
+                if isinstance(e, ImportError):
+                    st.warning("Please install altair: pip install altair")
+        with g_stats_cols[1]:
+            # --- NEW: Actual vs Expected Goals (xG) Visualization ---
+            st.markdown("#### xG Statistics")
+            st.markdown("**Average xG/xGA For and Aginst Per Game**")
 
-        st.markdown("#### Goal Trends")
-        goal_cols = st.columns(2)
-        with goal_cols[0]:
+            # --- End xG Visualization ---
+            try:
+                # Get data, providing defaults and converting safely
+                home_team_label = selected_match_data.get('home_team', 'Home')
+                away_team_label = selected_match_data.get('away_team', 'Away')
+
+                g_h = selected_match_data.get('goals_h') # Home GS
+                xg_h = selected_match_data.get('xg_h') # Home xG
+                c_h = selected_match_data.get('conceded_h') # Home conceded = Opponent goals
+                xga_h = selected_match_data.get('xga_h') # Home xGA = Opponent xG
+
+                g_a = selected_match_data.get('goals_a') # Away GS
+                xg_a = selected_match_data.get('xg_a') # Away xG
+                c_a = selected_match_data.get('conceded_a') # Away conceded = Opponent goals
+                xga_a = selected_match_data.get('xga_a') # Away xGA = Opponent xG
+
+                # Add a 'Location' column based on the Category string
+                def get_location(category_name):
+                    if home_team_label in category_name:
+                        return "Home"
+                    elif away_team_label in category_name:
+                        return "Away"
+                    else:
+                        return "Unknown" # Fallback
+                # Check if all necessary values are present and numeric
+                if all(v is not None for v in [g_h, xg_h, c_h, xga_h, g_a, xg_a, c_a, xga_a]):
+                    # Convert to float after check
+                    g_h, xg_h, c_h, xga_h = float(g_h), float(xg_h), float(c_h), float(xga_h)
+                    g_a, xg_a, c_a, xga_a = float(g_a), float(xg_a), float(c_a), float(xga_a)
+
+                    # Prepare data for GROUPED bar chart
+                    xg_data = pd.DataFrame({
+                        'Actual': [g_h, c_h, g_a, c_a],
+                        'Expected': [xg_h, xga_h, xg_a, xga_a]
+                    },
+                        index=[f"{home_team_label} Attack",
+                            f"{home_team_label} Defense",
+                            f"{away_team_label} Attack",
+                            f"{away_team_label} Defense"]
+                    )
+                    xg_data_reset = xg_data.reset_index()
+                    xg_data_reset = xg_data_reset.rename(columns={'index': 'Category'})
+
+                    xg_data_long = pd.melt(
+                        xg_data_reset,
+                        id_vars=['Category'],
+                        var_name='MetricType',
+                        value_name='Goals'
+                    )
+                    # st.dataframe(xg_data_long) # Keep for debugging if needed
+
+                    xg_data_long['Location'] = xg_data_long['Category'].apply(get_location)
+
+                    category_order = [
+                        f"{home_team_label} Attack", f"{home_team_label} Defense",
+                        f"{away_team_label} Attack", f"{away_team_label} Defense"
+                    ]
+
+                    # --- Create the Altair Chart ---
+
+                    # 1. Define the base chart for bars (this includes the xOffset)
+                    base_bars = alt.Chart(xg_data_long).encode(
+                        x=alt.X('Category:N',
+                                sort=category_order,
+                                axis=alt.Axis(title=None, labelAngle=0)),
+                        y=alt.Y('Goals:Q',
+                                axis=alt.Axis(title='Goals (Actual vs Expected)')),
+                        color=alt.Color('Location:N',
+                                        scale=alt.Scale(domain=['Home', 'Away'],
+                                                        range=['#5e993c', '#c47704']),
+                                        legend=alt.Legend(title="Location")),
+                        xOffset=alt.XOffset('MetricType:N'), # Group by Actual/Expected
+                        tooltip=[
+                            alt.Tooltip('Category', title='Focus'),
+                            alt.Tooltip('MetricType', title='Metric'),
+                            alt.Tooltip('Goals', format='.2f'),
+                            alt.Tooltip('Location')
+                        ]
+                    )
+
+                    # 2. Create the bar layer
+                    bars = base_bars.mark_bar()
+
+                    # 3. Create the text layer
+                    #    IMPORTANT: The text layer also needs the xOffset to align correctly
+                    #    OR, if we base it on the same 'base_bars', it will inherit the offset.
+                    #    We also need to make sure it uses the 'Goals' field for the text.
+                    text = base_bars.mark_text( # Inherit x, y, xOffset, color from base_bars
+                        align='center',
+                        baseline='bottom',
+                        dy=-5,  # Nudge text slightly above the bar
+                        # color='black' # Set text color explicitly if needed
+                    ).encode(
+                        text=alt.Text('Goals:Q', format='.2f'), # Use the 'Goals' column and format
+                        # We need to override the color encoding from base_bars if we want a fixed text color
+                        # If we don't, text will be colored like the bars, which might be hard to read.
+                        color=alt.value('black') # Force text color to black (or choose another)
+                    ).transform_filter( # Optional: Don't show labels for zero or very small values
+                        alt.datum.Goals > 0.01
+                    )
+
+                    # 4. Combine the layers
+                    final_chart = (bars + text).properties(
+                        # title='Goal Comparison' # Optional title
+                    ).interactive()
+
+                    # Display using st.altair_chart
+                    st.altair_chart(final_chart, use_container_width=True)
+                else:
+                    st.caption("xG/xGA data incomplete or missing, cannot plot comparison chart.")
+                    # Optionally display raw values if available
+                    xg_col1, xg_col2 = st.columns(2)
+                    with xg_col1:
+                        st.caption(f"**xG (H):** {selected_match_data.get('xg_h', '--')} | **xGA (H):** {selected_match_data.get('xga_h', '--')}")
+                    with xg_col2:
+                        st.caption(f"**xG (A):** {selected_match_data.get('xg_a', '--')} | **xGA (A):** {selected_match_data.get('xga_a', '--')}")
+
+            except (ValueError, TypeError, KeyError) as e:
+                st.caption(f"Could not plot xG comparison chart: {e}")
+
+        st.markdown("---") # Separator
+        
+        
+        # st.markdown("---")
+        stats_cols = st.columns(4)
+        with stats_cols[0]:
+            st.markdown("#### Goal Trends")
             h_halves_text = selected_match_data.get('halves_o05_h', '')
             h1_pct = selected_match_data.get('1h_o05_h', '')*100  # parse_specific_percent(h_halves_text, '1H', 0)
             h2_pct = selected_match_data.get('2h_o05_h', '')*100  # parse_specific_percent(h_halves_text, '2H', 0)
-            st.markdown(f"##### {selected_match_data.get('home_team','H')}")#(H): 1H={h1_pct}% | 2H={h2_pct}%
+            st.markdown(f"##### {selected_match_data.get('home_team','Home')}")#(H): 1H={h1_pct}% | 2H={h2_pct}%
 
             st.markdown("**Halves > 0.5 Goals %**")
             # st.progress(h1_pct / 100.0, text=f"1H {h1_pct}%")
@@ -2434,7 +2745,7 @@ else:
 
             st.markdown("---")
             
-            st.markdown("**Team Scored Over X Goals %**")
+            st.markdown("**Home Away Team Scored Over X Goals %**")
             h_team_goals_text = selected_match_data.get('team_goals_h', 'Over 0.5: 0% | O1.5: 0%')
             o05_h_pct = selected_match_data.get('team_goals_0_5_h', '')*100 #parse_specific_percent(h_team_goals_text, 'Over 0.5', 0)
             o15_h_pct_team = selected_match_data.get('team_goals_1_5_h', '')*100 #parse_specific_percent(h_team_goals_text, 'O1.5', 0)
@@ -2445,12 +2756,12 @@ else:
             # --- REPLACE st.progress ---
             st.markdown(create_colored_progress_bar(o15_h_pct_team, text_label="O1.5"), unsafe_allow_html=True)
 
-        with goal_cols[1]:
-
+        with stats_cols[1]:
+            st.markdown("#### ")
             a_match_goals_text = selected_match_data.get('match_goals_a', '')
             o15_a_pct = selected_match_data.get('1h_o05_a', '')*100#parse_specific_percent(a_match_goals_text, 'O1.5', 0)
             o25_a_pct = selected_match_data.get('2h_o05_a', '')*100#parse_specific_percent(a_match_goals_text, 'O2.5', 0)
-            st.markdown(f"##### {selected_match_data.get('away_team','A')}") # (A): O1.5={o15_a_pct}% | O2.5={o25_a_pct}%
+            st.markdown(f"##### {selected_match_data.get('away_team','Away')}") # (A): O1.5={o15_a_pct}% | O2.5={o25_a_pct}%
             st.markdown("**Halves > 0.5 Goals %**")
             # st.progress(o15_a_pct / 100.0, text=f"O1.5 {o15_a_pct}%")
             # st.progress(o25_a_pct / 100.0, text=f"O2.5 {o25_a_pct}%")
@@ -2473,7 +2784,7 @@ else:
             st.markdown(create_colored_progress_bar(a2_pct, text_label="2H"), unsafe_allow_html=True)
             st.markdown("---")
 
-            st.markdown("**Team Scored Over X Goals %**")
+            st.markdown("**Away Team Scored Over X Goals %**")
             a_team_goals_text = selected_match_data.get('team_goals_a', 'Over 0.5: 0% | O1.5: 0%')
             o05_a_pct = selected_match_data.get('team_goals_0_5_a', '')*100#parse_specific_percent(a_team_goals_text, 'Over 0.5', 0)
             o15_a_pct_team = selected_match_data.get('team_goals_1_5_a', '')*100#parse_specific_percent(a_team_goals_text, 'O1.5', 0)
@@ -2485,29 +2796,111 @@ else:
             st.markdown(create_colored_progress_bar(o15_a_pct_team, text_label="O1.5"), unsafe_allow_html=True)
             # --- END REPLACE ---
 
-        # st.markdown("---")
-        # st.markdown("**Team Scored Over X Goals %**")
-        # team_goal_cols = st.columns(2)
-        # with team_goal_cols[0]:
-        #     st.markdown(f"**{selected_match_data['home_team']} (Home)**")
-        # with team_goal_cols[1]:
-        #     st.markdown(f"**{selected_match_data['away_team']} (Away)**")
+        with stats_cols[2]:
+            st.markdown("#### Corners and Cards")
+            st.markdown(f"##### {selected_match_data.get('home_team','Home')}") 
+            st.markdown("**Corners (O/U)**")
+
+            st.markdown("**Over 7.5 Corners:**")
+            st.markdown(create_colored_progress_bar(Last5HomeOver7Corners, text_label="O7.5"), unsafe_allow_html=True)
+            st.markdown("**Over 8.5 Corners:**")
+            st.markdown(create_colored_progress_bar(Last5HomeOver8Corners, text_label="O8.5"), unsafe_allow_html=True)
+            st.markdown("**Over 9.5 Corners:**")
+            st.markdown(create_colored_progress_bar(Last5HomeOver9Corners, text_label="O9.5"), unsafe_allow_html=True)
+            st.markdown("**Over 10.5 Corners:**")
+            st.markdown(create_colored_progress_bar(Last5HomeOver10Corners, text_label="O10.5"), unsafe_allow_html=True)
+
+            st.markdown("---")
+
+            st.markdown("**Cards (O/U)**")
+            st.markdown("**Over 1.5 Cards:**")
+            st.markdown(create_colored_progress_bar(Last5HomeOver1YellowCards, text_label="O1.5"), unsafe_allow_html=True)
+            st.markdown("**Over 2.5 Cards:**")
+            st.markdown(create_colored_progress_bar(Last5HomeOver2YellowCards, text_label="O2.5"), unsafe_allow_html=True)
+            st.markdown("**Over 3.5 Cards:**")
+            st.markdown(create_colored_progress_bar(Last5HomeOver3YellowCards, text_label="O3.5"), unsafe_allow_html=True)
+            st.markdown("**Over 4.5 Cards:**")
+            st.markdown(create_colored_progress_bar(Last5HomeOver4YellowCards, text_label="O4.5"), unsafe_allow_html=True)
+
+        with stats_cols[3]:
+            st.markdown("#### ")
+            st.markdown(f"##### {selected_match_data.get('away_team','Away')}")
+            st.markdown("**Corners (O/U)**")
+
+            st.markdown("**Over 7.5 Corners:**")
+            st.markdown(create_colored_progress_bar(Last5AwayOver7Corners, text_label="O7.5"), unsafe_allow_html=True)
+            st.markdown("**Over 8.5 Corners:**")
+            st.markdown(create_colored_progress_bar(Last5AwayOver8Corners, text_label="O8.5"), unsafe_allow_html=True)
+            st.markdown("**Over 9.5 Corners:**")
+            st.markdown(create_colored_progress_bar(Last5AwayOver9Corners, text_label="O9.5"), unsafe_allow_html=True)
+            st.markdown("**Over 10.5 Corners:**")
+            st.markdown(create_colored_progress_bar(Last5AwayOver10Corners, text_label="O10.5"), unsafe_allow_html=True)
+
+            st.markdown("---")
+            st.markdown("**Cards (O/U)**")
+
+            st.markdown("**Over 1.5 Cards:**")
+            st.markdown(create_colored_progress_bar(Last5AwayOver1YellowCards, text_label="O1.5"), unsafe_allow_html=True)
+            st.markdown("**Over 2.5 Cards:**")
+            st.markdown(create_colored_progress_bar(Last5AwayOver2YellowCards, text_label="O2.5"), unsafe_allow_html=True)
+            st.markdown("**Over 3.5 Cards:**")
+            st.markdown(create_colored_progress_bar(Last5AwayOver3YellowCards, text_label="O3.5"), unsafe_allow_html=True)
+            st.markdown("**Over 4.5 Cards:**")
+            st.markdown(create_colored_progress_bar(Last5AwayOver4YellowCards, text_label="O4.5"), unsafe_allow_html=True)
 
 
     # H2H Tab
+    def display_h2h_stats(metric_label, h2h_val,team_overall_avg,league_avg_context,team,inverse_flag):
+        # h2h_val = float(selected_match_data.get('h2h_home_shots_against_avg', 0.0)) # Shots conceded by Home in H2H
+        # team_overall_avg = float(selected_match_data.get('shots_against_home_avg', 0.0)) # Team's overall avg AGAINST @ Home
+        delta_vs_team = h2h_val - team_overall_avg
+        # league_avg_context = float(selected_match_data.get('shots_against_league_home_avg', 0.0)) # League avg AGAINST @ Home
+        if inverse_flag == 1:
+            inverse_value = "inverse"
+        else:
+            inverse_value = "normal"
+        st.metric(label=metric_label,
+                value=f"{h2h_val:.2f}",
+                delta=f"{delta_vs_team:+.2f} vs Team Avg ({team_overall_avg})",
+                delta_color=inverse_value # Lower is better for AGAINST
+                ) 
+        st.caption(f"League Avg FOR @ {team}: {league_avg_context:.2f}") # Context
+
     with tabs[2]:
         st.markdown("#### Head-to-Head (H2H)")
         # ... (Keep H2H records display) ...
-        st.markdown("**Home vs Away Averages (in H2H Games)**")
-        cols1,cols2 = st.columns([1,2])
+        st.markdown("##### Home vs Away Averages (in H2H Games)")
+        HeadToHeadBTTS = round(selected_match_data.get('HeadToHeadBTTS'),2) * 100 if selected_match_data.get('HeadToHeadBTTS') is not None else 0
+
+        cols1,cols2,cols3 = st.columns([1,1.5,2])
         with cols1:
             h2h_cols = st.columns(2)
             h2h_cols[0].metric(label="Home vs Away Record", value=selected_match_data.get('h2h_hva_record', '--').strip("()"))
             h2h_cols[0].metric(label="All Time H2H Record", value=selected_match_data.get('h2h_all_record', '--').strip("()"))
+            h2h_cols[0].metric(label="Home xG", value=HeadToHeadHomeXG, delta=f"{HeadToHeadHomeXG-HeadToHeadAwayXG} vs Away xG")
+            h2h_cols[0].metric(label="H2H GG", value=f"{HeadToHeadBTTS}%")
+        
             h2h_cols[1].metric(label="Matches", value=selected_match_data.get('h2h_hva_games', '--'))
             h2h_cols[1].metric(label="Matches", value=selected_match_data.get('h2h_all_games', '--'))
+            h2h_cols[1].metric(label="Away xG", value=HeadToHeadAwayXG, delta=f"{HeadToHeadAwayXG-HeadToHeadHomeXG} vs Home xG")
 
         with cols2:
+            # st.markdown("##### H2H Stats")
+            # st.markdown("")
+            h2h_stats_cols = st.columns(2)
+            
+            with h2h_stats_cols[0]:
+                display_h2h_stats("**Home Total Shots:**", HeadToHeadHomeTotalShots, Last5HomeAvergeTotalShots,l5_home_for_league_avg_shots,"Home",0)
+                display_h2h_stats("**Home Shots On Target:**", HeadToHeadHomeShotsOnTarget, Last5HomeAvergeTotalShotsOnGoal, l5_home_for_league_avg_sot,"Home",0)
+                display_h2h_stats("**Home Fouls:**", HeadToHeadHomeFouls, Last5HomeAvergeTotalFouls, l5_home_for_league_avg_fouls,"Home",1)
+                
+            with h2h_stats_cols[1]:
+                
+                display_h2h_stats("**Away Total Shots:**", HeadToHeadAwayTotalShots, Last5AwayAvergeTotalShots, l5_away_for_league_avg_shots,"Away",0)
+                display_h2h_stats("**Away Shots On Target:**", HeadToHeadAwayShotsOnTarget, Last5AwayAvergeTotalShotsOnGoal,l5_away_for_league_avg_sot,"Away",0 )
+                display_h2h_stats("**Away Fouls:**", HeadToHeadAwayFouls, Last5AwayAvergeTotalFouls, l5_away_for_league_avg_fouls,"Away",1)
+
+        with cols3:
             try:
                 # Prepare data in 'long' format
                 home_team_label = selected_match_data.get('home_team', 'Home')
@@ -2575,30 +2968,106 @@ else:
                 if isinstance(e, ImportError):
                     st.warning("Please install altair: pip install altair")
 
-        st.markdown("**Home vs Away Over/Under Goals (in H2H Games)**")
+        st.markdown("---")
+        st.markdown("##### Home vs Away Over/Under Goals (in H2H Games)")
         # Parse H2H Over/Under - more complex string potentially
         h2h_ou_text = selected_match_data.get('h2h_hva_ou', '')
         o15_h2h = int((selected_match_data.get('h2h_hva_o1_5') or 0) * 100) #parse_specific_percent(h2h_ou_text, 'O1.5', 0)
         o25_h2h = int((selected_match_data.get('h2h_hva_o2_5') or 0) * 100) #parse_specific_percent(h2h_ou_text, 'O2.5', 0)
         u25_h2h = int((selected_match_data.get('h2h_hva_u2_5') or 0) * 100) #parse_specific_percent(h2h_ou_text, 'U2.5', 0)
         u35_h2h = int((selected_match_data.get('h2h_hva_u3_5') or 0) * 100) #parse_specific_percent(h2h_ou_text, 'U3.5', 0)
-        h2h_ou_cols = st.columns(4)
+        h2h_ou_cols = st.columns(3)
         with h2h_ou_cols[0]:
-            st.text("Over 1.5:")
+            st.markdown("##### Goal Stats")
+            st.markdown("1st & 2nd Half Goals Trends")
+            half_cols = st.columns(2)
+            with half_cols[0]:
+                st.metric("Home 1H",selected_match_data.get('HeadToHeadHomeFirstHalfGoalsScored') or '--')
+                st.metric("Away 1H",selected_match_data.get('HeadToHeadAwayFirstHalfGoalsScored') or '--')
+            with half_cols[1]:
+                st.metric("Home 2H",selected_match_data.get('HeadToHeadHomeSecondHalfGoalsScored') or '--')
+                st.metric("Away 2H",selected_match_data.get('HeadToHeadAwaySecondHalfGoalsScored') or '--')
+
+        with h2h_ou_cols[1]:
+            st.markdown("##### Corner Stats")
+            st.markdown("Corners Trends")
+            corner_stats_cols = st.columns(2)
+            with corner_stats_cols[0]:
+                # st.metric("**Home Corners:**", )
+                display_h2h_stats("**Home Corners:**", HeadToHeadHomeCorners, Last5HomeAvergeTotalcorners,l5_home_for_league_avg_corners,"Home",0)
+
+            with corner_stats_cols[1]:
+                # st.metric("**Away Corners:**", )
+                display_h2h_stats("**Away Corners:**", HeadToHeadAwayCorners, Last5AwayAvergeTotalcorners,l5_away_for_league_avg_corners,"Away",0)
+        
+        with h2h_ou_cols[2]:
+            st.markdown("##### Card Stats")
+            st.markdown("Cards Trends")
+            card_stats_cols = st.columns(2)
+            with card_stats_cols[0]:
+                display_h2h_stats("**Home Yellows:**", HeadToHeadHomeYellowCards, Last5HomeAvergeTotalYellowCards,l5_home_for_league_avg_yellow_cards,"Home",1)
+                # st.metric("**Home Yellow Cards:**", selected_match_data.get('HeadToHeadHomeYellowCards') or '--')
+                # st.metric("**Home Red Cards:**", selected_match_data.get('HeadToHeadHomeRedCards') or '--')
+            with card_stats_cols[1]:
+                # st.metric("**Away Yellow Cards:**", selected_match_data.get('HeadToHeadAwayYellowCards') or '--')
+                # st.metric("**Away Red Cards:**", selected_match_data.get('HeadToHeadAwayRedCards') or '--')            
+                display_h2h_stats("**Away Yellows:**", HeadToHeadAwayYellowCards, Last5AwayAvergeTotalYellowCards,l5_away_for_league_avg_yellow_cards,"Away",1)
+            
+        h2h_col = st.columns(3)
+
+        with h2h_col[0]:
+            st.markdown("---")
+            st.markdown("Goals (O/U)")
+            st.write("")
+            st.markdown("Over 1.5:")
             # st.progress(o15_h2h / 100.0)
             st.markdown(create_colored_progress_bar(o15_h2h), unsafe_allow_html=True)
-        with h2h_ou_cols[1]:
-            st.text("Over 2.5:")
+            st.markdown("Over 2.5:")
             # st.progress(o25_h2h / 100.0)
             st.markdown(create_colored_progress_bar(o25_h2h), unsafe_allow_html=True)
-        with h2h_ou_cols[2]:
-            st.text("Under 2.5:")
+            st.markdown("Under 2.5:")
             # st.progress(u25_h2h / 100.0)
             st.markdown(create_colored_progress_bar(u25_h2h), unsafe_allow_html=True)
-        with h2h_ou_cols[3]:
-            st.text("Under 3.5:")
+            st.markdown("Under 3.5:")
             # st.progress(u35_h2h / 100.0)
             st.markdown(create_colored_progress_bar(u35_h2h), unsafe_allow_html=True)
+        
+        with h2h_col[1]:
+            st.markdown("---")
+            st.markdown("Corners (O/U)")
+            st.write(" ")
+            o7c = int((selected_match_data.get('HeadToHeadOver7Corners') or 0)*100)    
+            o8c = int((selected_match_data.get('HeadToHeadOver8Corners') or 0)*100)    
+            o9c = int((selected_match_data.get('HeadToHeadOver9Corners') or 0)*100)    
+            o10c = int((selected_match_data.get('HeadToHeadOver10Corners') or 0)*100)    
+            
+            st.markdown("Over 7.5 corners:")
+            st.markdown(create_colored_progress_bar(o7c), unsafe_allow_html=True)
+            st.markdown("Over 8.5 corners:")
+            st.markdown(create_colored_progress_bar(o8c), unsafe_allow_html=True)
+            st.markdown("Over 9.5 corners:")
+            st.markdown(create_colored_progress_bar(o9c), unsafe_allow_html=True)
+            st.markdown("Over 10.5 corners:")
+            st.markdown(create_colored_progress_bar(o10c), unsafe_allow_html=True)
+        with h2h_col[2]:
+            st.markdown("---")
+            st.markdown("Cards (O/U)")
+            st.write(" ")
+            o1c = int((selected_match_data.get('HeadToHeadOver1YellowCards') or 0)*100) 
+            o2c = int((selected_match_data.get('HeadToHeadOver2YellowCards') or 0)*100) 
+            o3c = int((selected_match_data.get('HeadToHeadOver3YellowCards') or 0)*100) 
+            o4c = int((selected_match_data.get('HeadToHeadOver4YellowCards') or 0)*100) 
+            
+            st.markdown("Over 1.5 yellow cards:")
+            st.markdown(create_colored_progress_bar(o1c), unsafe_allow_html=True)
+            st.markdown("Over 2.5 yellow cards:")
+            st.markdown(create_colored_progress_bar(o2c), unsafe_allow_html=True)
+            st.markdown("Over 3.5 yellow cards:")
+            st.markdown(create_colored_progress_bar(o3c), unsafe_allow_html=True)
+            st.markdown("Over 4.5 yellow cards:")
+            st.markdown(create_colored_progress_bar(o4c), unsafe_allow_html=True)
+                
+        # with h2h_ou_cols[3]:
 
     # Insights Tab
     with tabs[3]:
@@ -2644,14 +3113,20 @@ else:
             st.markdown(f"**(Based on {selected_match_data['home_team']} Matches)**")
             if not insights_total_h_parsed: st.caption("No total match insights (Home perspective).")
             for insight in insights_total_h_parsed:
-                if insight.get('delta_str'): st.metric(label=insight['label'], value=insight['value'], delta=insight['delta_str'])
-                elif insight.get('value'): st.markdown(f"**{insight['label']}:** {insight['value']}")
-                else: st.caption(f"{insight['label']} (No data)")
+                if insight.get('delta_str'): 
+                    st.metric(label=insight['label'], value=insight['value'], delta=insight['delta_str'])
+                elif insight.get('value'): 
+                    st.markdown(f"**{insight['label']}:** {insight['value']}")
+                else: 
+                    st.caption(f"{insight['label']} (No data)")
 
         with col2:
             st.markdown(f"**(Based on {selected_match_data['away_team']} Matches)**")
             if not insights_total_a_parsed: st.caption("No total match insights (Away perspective).")
             for insight in insights_total_a_parsed:
-                if insight.get('delta_str'): st.metric(label=insight['label'], value=insight['value'], delta=insight['delta_str'])
-                elif insight.get('value'): st.markdown(f"**{insight['label']}:** {insight['value']}")
-                else: st.caption(f"{insight['label']} (No data)")
+                if insight.get('delta_str'): 
+                    st.metric(label=insight['label'], value=insight['value'], delta=insight['delta_str'])
+                elif insight.get('value'): 
+                    st.markdown(f"**{insight['label']}:** {insight['value']}")
+                else: 
+                    st.caption(f"{insight['label']} (No data)")
