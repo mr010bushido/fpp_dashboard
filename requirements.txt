@@ -1,0 +1,6 @@
+streamlit
+pandas-stubs==2.2.3.250308
+datetime
+altair
+emoji
+numpy
