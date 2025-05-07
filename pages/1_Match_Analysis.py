@@ -16,15 +16,12 @@ import glob # For finding weekly files
 
 # --- Configuration ---
 # Change this to 'csv', 'postgres', or 'text' to simulate different sources
-<<<<<<< HEAD
-# WEEKLY_PREDICTIONS_DIR = "data/pre_match/"
-# COMBINED_RESULTS_FILE = "data/combined_results.csv"
-WEEKLY_PREDICTIONS_DIR = "fpp_dashboard/data/pre_match/"
-COMBINED_RESULTS_FILE = "fpp_dashboard/data/combined_results.csv"
-=======
+
 WEEKLY_PREDICTIONS_DIR = "data/pre_match/"
 COMBINED_RESULTS_FILE = "data/combined_results.csv"
->>>>>>> c5baa3e9117bd40fd97ca3f8209926dacaed56c5
+#WEEKLY_PREDICTIONS_DIR = "fpp_dashboard/data/pre_match/"
+#COMBINED_RESULTS_FILE = "fpp_dashboard/data/combined_results.csv"
+
 
 DATA_SOURCE = 'csv'
 # Placeholder for DB connection (replace with actuals if using postgres)
@@ -1875,9 +1872,11 @@ if not selected_match_data:
                                     away_score_display = f"**{int(away_goals)}**"
                                     st.caption(f"{home_score_display}", unsafe_allow_html=True)
                                     st.markdown(f"{away_score_display}", unsafe_allow_html=True)
+
                                 else:
                                     st.caption(f"{home_score_display}", unsafe_allow_html=True)
                                     st.markdown(f"{away_score_display}", unsafe_allow_html=True)
+
 
 
                                 
