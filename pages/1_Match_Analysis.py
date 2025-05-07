@@ -16,10 +16,15 @@ import glob # For finding weekly files
 
 # --- Configuration ---
 # Change this to 'csv', 'postgres', or 'text' to simulate different sources
+<<<<<<< HEAD
 # WEEKLY_PREDICTIONS_DIR = "data/pre_match/"
 # COMBINED_RESULTS_FILE = "data/combined_results.csv"
 WEEKLY_PREDICTIONS_DIR = "fpp_dashboard/data/pre_match/"
 COMBINED_RESULTS_FILE = "fpp_dashboard/data/combined_results.csv"
+=======
+WEEKLY_PREDICTIONS_DIR = "data/pre_match/"
+COMBINED_RESULTS_FILE = "data/combined_results.csv"
+>>>>>>> c5baa3e9117bd40fd97ca3f8209926dacaed56c5
 
 DATA_SOURCE = 'csv'
 # Placeholder for DB connection (replace with actuals if using postgres)
