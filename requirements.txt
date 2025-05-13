@@ -4,3 +4,4 @@ datetime
 altair
 emoji
 numpy
+math
