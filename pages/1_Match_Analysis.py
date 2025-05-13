@@ -14,6 +14,7 @@ import traceback # For detailed error logging
 import numpy as np # For NaN handling
 import glob # For finding weekly files
 from pathlib import Path
+import math
 
 # --- Configuration ---
 # If pages/1_🏠_Match_Analysis.py is in PROJECT_ROOT/pages/1_🏠_Match_Analysis.py
@@ -360,7 +361,6 @@ def parse_specific_percent(text_value, label_prefix, default=0):
         return default # Return default if nothing found
     except: return default
 
-
 def parse_insights_string(text_block):
     parsed_insights = []
     if not isinstance(text_block, str): return parsed_insights
@@ -398,7 +398,6 @@ def parse_insights_string(text_block):
             if insight['label']: # Add even if parsing failed partially
                 parsed_insights.append(insight)
     return parsed_insights
-
 
 def parse_h2h_value(text_value, key_label, is_numeric=True, default=None):
     """ Extracts H or A value from strings like 'H:1.125 | A:1.5' """
@@ -747,7 +746,7 @@ def load_data_from_csv(filepath) -> pd.DataFrame:
         
         # Basic Cleaning & Type Conversion (adjust as needed based on actual CSV)
         # Convert potential numeric columns, coercing errors to NaN then filling
-        float_cols = ['exp_val_h','exp_val_d','exp_val_a','ppg_h','ppg_h_all','ppg_a','ppg_a_all','goals_h','xg_h','goals_a','xg_a','conceded_h','xga_h','conceded_a','xga_a','1h_o05_h','1h_o05_a','2h_o05_h','2h_o05_a','team_goals_0_5_h','team_goals_1_5_h','team_goals_0_5_a','team_goals_1_5_a','match_goals_1_5_a','match_goals_2_5_h','match_goals_1_5_h','match_goals_2_5_a','clean_sheet_h','clean_sheet_a','ht_win_rates_h','ft_win_rates_h','ht_win_rates_a','ft_win_rates_a','h2h_hva_ppg_str','h2h_hva_ppg_str','h2h_h_goals_str','HeadToHeadHomeXG','h2h_a_goals_str','HeadToHeadAwayXG','h2h_hva_o1_5','h2h_hva_o2_5','confidence_score','pred_outcome_conf','pred_goals_conf','pred_corners_conf',
+        float_cols = ['exp_val_h','exp_val_d','exp_val_a','ppg_h','ppg_h_all','ppg_a','ppg_a_all','goals_h','xg_h','goals_a','xg_a','conceded_h','xga_h','conceded_a','xga_a','1h_o05_h','1h_o05_a','2h_o05_h','2h_o05_a','team_goals_0_5_h','team_goals_1_5_h','team_goals_0_5_a','team_goals_1_5_a','match_goals_1_5_a','match_goals_2_5_h','match_goals_1_5_h','match_goals_2_5_a','clean_sheet_h','clean_sheet_a','ht_win_rates_h','ft_win_rates_h','ht_win_rates_a','ft_win_rates_a','h2h_hva_ppg_str','h2h_hva_ppg_str','h2h_h_goals_str','HeadToHeadHomeXG','h2h_a_goals_str','HeadToHeadAwayXG','h2h_hva_o1_5','h2h_hva_o2_5','confidence_score','pred_outcome_conf','pred_goals_conf','pred_corners_conf','pred_cards_conf', 'pred_alt_conf',
 
         'Last5_HomeBothTeamsToScore','Last5HomeAvergeTotalShots','Last5HomeAvergeTotalShotsOnGoal','Last5HomeAvergeTotalFouls','Last5HomeAvergeTotalcorners','Last5HomeAvergeTotalYellowCards','Last5HomeAvergeTotalRedCards','Last5_AwayBothTeamsToScore','Last5AwayAvergeTotalShots','Last5AwayAvergeTotalShotsOnGoal','Last5AwayAvergeTotalFouls','Last5AwayAvergeTotalcorners','Last5AwayAvergeTotalYellowCards','Last5AwayAvergeTotalRedCards','l5_home_for_league_avg_shots','l5_home_for_league_avg_sot','l5_home_for_league_avg_corners','l5_home_for_league_avg_fouls','l5_home_for_league_avg_yellow_cards','l5_home_for_league_avg_red_cards','l5_away_for_league_avg_shots','l5_away_for_league_avg_sot','l5_away_for_league_avg_corners','l5_away_for_league_avg_fouls','l5_away_for_league_avg_yellow_cards','l5_away_for_league_avg_red_cards','l5_away_against_league_avg_shots','l5_away_against_league_avg_sot','l5_away_against_league_avg_corners','l5_away_against_league_avg_fouls','l5_away_against_league_avg_yellow_cards','l5_away_against_league_avg_red_cards','l5_home_against_league_avg_shots','l5_home_against_league_avg_sot','l5_home_against_league_avg_corners','l5_home_against_league_avg_fouls','l5_home_against_league_avg_yellow_cards','l5_home_against_league_avg_red_cards','HeadToHeadBTTS','HeadToHeadHomeTotalShots','HeadToHeadAwayTotalShots','HeadToHeadHomeShotsOnTarget','HeadToHeadAwayShotsOnTarget','HeadToHeadHomeFouls','HeadToHeadAwayFouls','HeadToHeadHomeCorners','HeadToHeadAwayCorners','HeadToHeadHomeYellowCards','HeadToHeadAwayYellowCards','HeadToHeadHomeRedCards','HeadToHeadAwayRedCards','HeadToHeadOver7Corners','HeadToHeadOver8Corners','HeadToHeadOver9Corners','HeadToHeadOver10Corners','HeadToHeadOver1YellowCards','HeadToHeadOver2YellowCards','HeadToHeadOver3YellowCards','HeadToHeadOver4YellowCards','HomeGoals','AwayGoals','Corners','YellowCards','RedCards',
         'HTRHome','HTRDraw','HTRAway','FTTotalGoalsOver0.5','FTTotalGoalsOver1.5','FTTotalGoalsOver2.5','FTTotalGoalsOver3.5','FTBTTS','FHTTotalGoalsOver0.5','FHTTotalGoalsOver1.5','FHTTotalGoalsOver2.5','FHTTotalGoalsOver3.5','SHTTotalGoalsOver0.5','SHTTotalGoalsOver1.5','SHTTotalGoalsOver2.5','SHTTotalGoalsOver3.5','HomeWinToNil','AwayWinToNil','ScoredFirstTime','HomeSOTResults',
@@ -868,299 +867,6 @@ def load_data_from_postgres(db_params):
     sample_df = create_sample_dataframe()
     return sample_df.to_dict('records')
 
-# def create_sample_dataframe():
-#     """Creates a sample Pandas DataFrame for simulation with more variety."""
-#     sample_data = [
-#         # --- Existing Samples ---
-#         {
-#             'date': "26/04/2025",
-#             'time': "07:00",
-#             'country': "Japan",
-#             'league': "Japan, J1 League ( 20 )",
-#             'league_name': "J1 League",
-#             'home_team': "Kashiwa Reysol",
-#             'home_rank': "2nd/Top",
-#             'away_team': "Albirex Niigata",
-#             'away_rank': "19th/Bottom",
-#             'exp_val_h': '17.71%',
-#             'exp_val_d': None,
-#             'exp_val_a': None,
-#             'advice': "Combo Double chance : Kashiwa Reysol or draw and -3.5 goals",
-#             'value_bets': "H(2.23)",
-#             'form_home': "⬜🟩🟥⬜🟩//🟩⬜🟩⬜⬜",
-#             'form_away': "⬜🟥🟥🟥🟩//🟥⬜🟩🟥⬜",
-#             'ppg_h': 1.6,
-#             'ppg_h_all': 1.8,
-#             'ppg_a': 0.8,
-#             'ppg_a_all': 1.0,
-#             'goals_h': 1.0,
-#             'xg_h': 1.07,
-#             'goals_a': 0.6,
-#             'xg_a': 1.47,
-#             'conceded_h': 1.0,
-#             'xga_h': 0.64,
-#             'conceded_a': 1.2,
-#             'xga_a': 1.25,
-#             'halves_o05_h': "1H: 40% | 2H: 80%",
-#             'halves_o05_a': "1H: 100% | 2H: 60%",
-#             'team_goals_h': "Over 0.5: 60% | O1.5: 40%",
-#             'team_goals_a': "Over 0.5: 60% | O1.5: 40%",
-#             'match_goals_h': "O1.5: 80% | O2.5: 20%",
-#             'match_goals_a': "O1.5: 60% | O2.5: 0%",
-#             'clean_sheet_h': "100%",
-#             'clean_sheet_a': "60%",
-#             'win_rates_h': "HT: 0% | FT: 40%",
-#             'win_rates_a': "HT: 40% | FT: 20%",
-#             'h2h_hva_record': "3-6-0",
-#             'h2h_hva_games': 9,
-#             'h2h_all_record': "6-10-2",
-#             'h2h_all_games': 18,
-#             'h2h_hva_ppg_str': "H:1.66 | A:0.66",
-#             'h2h_hva_goals_str': "H:1.0 | A:0.56",
-#             'h2h_hva_ou': "O1.5: 60% | O2.5: 20% ║ U2.5: 20% | U3.5: 66%",
-#             'insights_home': "Home goals/game: 1.00 (-29.58% 🔻 avg )\nHome corners/game: 6.60 (+24.06% 🔼 avg)",
-#             'insights_away': "Away goals/game: 0.60 (-52.00% 🔻 avg)\nAway corners/game: 3.60 (-23.89% 🔻 avg)",
-#             'insights_total_h': "Total match goals/game: 1.83 (-31.34% 🔻 avg)\nTotal match corners/game: 11.35 (+13.61% 🔼 avg)\nU2.5 goals: 80.00% (+30.00% 🔼 avg)\nU3.5 goals: 90.00% (+16.00% 🔼 avg)\nO8.5 corners: 91.67% (+23.67% 🔼 avg)\nU12.5 corners: 71.67% (-5.33% 🔼 avg)",
-#             'insights_total_a': "U12.5 corners: 73.33% (-3.67% 🔼 avg)",
-#             'confidence_score': 7,
-#             'pred_outcome': "Home Win",
-#             'pred_outcome_conf': 7,
-#             'pred_goals': "Under 2.5",
-#             'pred_goals_conf': 7,
-#             'pred_corners': "Over 8.5",
-#             'pred_corners_conf': 7,
-#             'rec_prediction': "Under 2.5",
-#             'match_id': 'Kashiwa Reysol_Albirex Niigata_26/04/2025_0'
-#         },
-#         {
-#             'date': "26/04/2025", 'time': "13:00", 'country': "Germany", 'league': "Germany, 2. Bundesliga", 'league_name': "2. Bundesliga",
-#             'home_team': "SSV Jahn Regensburg", 'home_rank': "18th/Bottom", 'away_team': "Eintracht Braunschweig", 'away_rank': "15th/Mid",
-#              'exp_val_h': None, 'exp_val_d': '1.00%', 'exp_val_a': None,
-#             'advice': "Double chance : draw or Eintracht Braunschweig", 'value_bets': "A(2.31), X(3.46)",
-#             'form_home': "🟩⬜⬜🟩🟩//🟥🟩🟥🟩🟥", 'form_away': "🟩🟥⬜⬜🟩//🟩🟩🟩⬜🟥",
-#             'ppg_h': 2.2, 'ppg_h_all': 1.2, 'ppg_a': 1.6, 'ppg_a_all': 2.0,
-#              'goals_h': 1.4, 'xg_h': None, 'goals_a': 1.6, 'xg_a': None, # xG/xGA often missing
-#              'conceded_h': 0.4, 'xga_h': None, 'conceded_a': 1.4, 'xga_a': None,
-#             'halves_o05_h': "1H: 80% | 2H: 80%", 'halves_o05_a': "1H: 80% | 2H: 80%",
-#             'team_goals_h': "Over 0.5: 40% | O1.5: 60%", 'team_goals_a': "Over 0.5: 80% | O1.5: 20%",
-#             'match_goals_h': "O1.5: 80% | O2.5: 60%", 'match_goals_a': "O1.5: 80% | O2.5: 40%",
-#             'clean_sheet_h': "100%", 'clean_sheet_a': "80%",
-#             'win_rates_h': "HT: 60% | FT: 60%", 'win_rates_a': "HT: 40% | FT: 40%",
-#             'h2h_hva_record': "4-2-0", 'h2h_hva_games': 6,
-#             'h2h_all_record': "6-4-4", 'h2h_all_games': 14,
-#             'h2h_hva_ppg_str': "H:1.0 | A:0.33", 'h2h_hva_goals_str': "H: | A:0.67", 'h2h_hva_ou': "O1.5: 100% | O2.5: 40% ║ U2.5: 40% | U3.5: 100%",
-#             'insights_home': "Home goals/game: 0.73 (-55.01% 🔻 avg )\nHome corners/game: 5.13 (-8.50% 🔻 avg)",
-#             'insights_away': "Away goals/game: 1.00 (-27.01% 🔻 avg)\nAway corners/game: 5.13 (+6.28% 🔼 avg)",
-#             'insights_total_h': "NG: 76.67% (+35.67% 🔼 avg)\nO8.5 corners: 76.67% (+5.67% 🔼 avg)\nU12.5 corners: 80.00% (+5.00% 🔼 avg)",
-#             'insights_total_a': "O1.5 goals: 83.33% (+5.33% 🔼 avg)\nU12.5 corners: 76.67% (+1.67% 🔼 avg)",
-#             'confidence_score': 7,
-#             'pred_outcome': "Home Win", 'pred_outcome_conf': 7,
-#             'pred_goals': "Under 2.5", 'pred_goals_conf': 7,
-#             'pred_corners': "Over 8.5", 'pred_corners_conf': 7,
-#             'rec_prediction': "Home Win",
-#             'match_id': 'SSV Jahn Regensburg_Eintracht Braunschweig_26/04/2025_1'
-#         },
-#         # --- New Sample Matches ---
-#         { # Same day as above, different league
-#             'date': "26/04/2025", 'time': "14:00", 'country': "England", 'league': "England, League Two ( 24 )", 'league_name': "League Two",
-#             'home_team': "Harrogate Town", 'home_rank': "19th/Mid", 'away_team': "Notts County", 'away_rank': "6th/Top",
-#             'exp_val_h': None, 'exp_val_d': '1.58%', 'exp_val_a': None,
-#             'advice': "Double chance : Harrogate Town or draw", 'value_bets': "A(1.75), X(3.87)",
-#             'form_home': "🟩⬜🟩⬜🟩//🟩⬜⬜🟥🟩", 'form_away': "⬜🟥🟩🟥⬜//🟥⬜🟥🟥🟩",
-#             'ppg_h': 2.2, 'ppg_h_all': 1.6, 'ppg_a': 1.0, 'ppg_a_all': 0.8,
-#             'goals_h': 2.0, 'xg_h': 1.8, 'goals_a': 1.0, 'xg_a': 1.1, # Added some xG
-#             'conceded_h': 1.2, 'xga_h': 1.4, 'conceded_a': 1.2, 'xga_a': 1.3, # Added some xGA
-#             'halves_o05_h': "1H: 60% | 2H: 100%", 'halves_o05_a': "1H: 80% | 2H: 60%",
-#             'team_goals_h': "Over 0.5: 80% | O1.5: 40%", 'team_goals_a': "Over 0.5: 80% | O1.5: 60%",
-#             'match_goals_h': "O1.5: 100% | O2.5: 60%", 'match_goals_a': "O1.5: 60% | O2.5: 40%",
-#             'clean_sheet_h': "0%", 'clean_sheet_a': "40%",
-#             'win_rates_h': "HT: 40% | FT: 60%", 'win_rates_a': "HT: 40% | FT: 20%",
-#             'h2h_hva_record': "2-0-0", 'h2h_hva_games': 2,
-#             'h2h_all_record': "2-0-4", 'h2h_all_games': 6,
-#             'h2h_hva_ppg_str': "H:3.0 | A:0.0", 'h2h_hva_goals_str': "H:3.0 | A:1.0", 'h2h_hva_ou': "O1.5: 80% | O2.5: 20% ║ U2.5: 20% | U3.5: 100%",
-#             'insights_home': "Home goals/game: 1.14 (-17.65% 🔻 avg )\nHome corners/game: 4.48 (-14.58% 🔻 avg)",
-#             'insights_away': "Away goals/game: 1.55 (+37.99% 🔼 avg)\nAway corners/game: 4.48 (+2.90% 🔼 avg)",
-#             'insights_total_h': "Total match corners/game: 10.84 (+17.28% 🔼 avg)",
-#             'insights_total_a': "O1.5 goals: 77.27% (+6.27% 🔼 avg)\nU12.5 corners: 77.27% (-0.73% 🔼 avg)",
-#             'confidence_score': 7,
-#             'pred_outcome': "Home or Draw", 'pred_outcome_conf': 7,
-#             'pred_goals': "Over 1.5", 'pred_goals_conf': 7,
-#             'pred_corners': "Under 12.5", 'pred_corners_conf': 7,
-#             'rec_prediction': "Over 1.5",
-#             'match_id': 'Harrogate Town_Notts County_26/04/2025_2'
-#         },
-#         { # Same day, another German league game
-#             'date': "26/04/2025", 'time': "15:30", 'country': "Germany", 'league': "Germany, 2. Bundesliga", 'league_name': "2. Bundesliga",
-#             'home_team': "Bayern Munich", 'home_rank': "1st/Top", 'away_team': "Borussia Dortmund", 'away_rank': "3rd/Top",
-#             'exp_val_h': '25.0%', 'exp_val_d': None, 'exp_val_a': None,
-#             'advice': "Winner: Bayern Munich", 'value_bets': "H(1.40)",
-#             'form_home': "🟩🟩🟩🟩⬜", 'form_away': "🟩⬜🟩🟩🟥",
-#             'ppg_h': 2.8, 'ppg_h_all': 2.6, 'ppg_a': 2.1, 'ppg_a_all': 2.0,
-#             'goals_h': 3.1, 'xg_h': 2.9, 'goals_a': 2.2, 'xg_a': 2.0,
-#             'conceded_h': 0.7, 'xga_h': 0.9, 'conceded_a': 1.1, 'xga_a': 1.2,
-#             'halves_o05_h': "1H: 90% | 2H: 95%", 'halves_o05_a': "1H: 85% | 2H: 90%",
-#             'team_goals_h': "Over 0.5: 100% | O1.5: 90%", 'team_goals_a': "Over 0.5: 95% | O1.5: 70%",
-#             'match_goals_h': "O1.5: 100% | O2.5: 85%", 'match_goals_a': "O1.5: 95% | O2.5: 75%",
-#             'clean_sheet_h': "60%", 'clean_sheet_a': "45%",
-#             'win_rates_h': "HT: 65% | FT: 80%", 'win_rates_a': "HT: 50% | FT: 65%",
-#             'h2h_hva_record': "7-2-1", 'h2h_hva_games': 10,
-#             'h2h_all_record': "15-5-5", 'h2h_all_games': 25,
-#             'h2h_hva_ppg_str': "H:2.3 | A:0.8", 'h2h_hva_goals_str': "H:2.8 | A:1.1", 'h2h_hva_ou': "O1.5: 90% | O2.5: 70% ║ U2.5: 30% | U3.5: 50%",
-#             'insights_home': "Home goals/game: 3.1 (+15% 🔼 avg)",
-#             'insights_away': "Away goals/game: 2.2 (+8% 🔼 avg)",
-#             'insights_total_h': "O2.5 goals: 85% (+20% 🔼 avg)\nO10.5 corners: 60% (+5% 🔼 avg)",
-#             'insights_total_a': "O2.5 goals: 75% (+10% 🔼 avg)",
-#             'confidence_score': 8,
-#             'pred_outcome': "Home Win", 'pred_outcome_conf': 8,
-#             'pred_goals': "Over 2.5", 'pred_goals_conf': 8,
-#             'pred_corners': "Over 10.5", 'pred_corners_conf': 6,
-#             'rec_prediction': "Over 2.5",
-#             'match_id': 'Bayern Munich_Borussia Dortmund_26/04/2025_3'
-#         },
-#         { # Different date, different league
-#             'date': "27/04/2025", 'time': "17:15", 'country': "France", 'league': "France, Ligue 1 ( 18 )", 'league_name': "Ligue 1",
-#             'home_team': "Lens", 'home_rank': "8th/Mid", 'away_team': "Auxerre", 'away_rank': "11th/Mid",
-#             'exp_val_h': '4.62%', 'exp_val_d': '1.60%', 'exp_val_a': None,
-#             'advice': "Double chance : Lens or draw", 'value_bets': "H(1.62), X(4.31)",
-#             'form_home': "🟩//🟩🟥🟩🟥🟩", 'form_away': "⬜🟩⬜🟩🟥//🟥🟥🟩🟩⬜", # Short form example
-#             'ppg_h': 3.0, 'ppg_h_all': 1.8, 'ppg_a': 1.6, 'ppg_a_all': 1.4,
-#             'goals_h': 1.0, 'xg_h': 1.76, 'goals_a': 1.4, 'xg_a': 1.02,
-#             'conceded_h': 1.6, 'xga_h': 1.46, 'conceded_a': 1.2, 'xga_a': 1.8,
-#             'halves_o05_h': "1H: 40% | 2H: 100%", 'halves_o05_a': "1H: 80% | 2H: 80%",
-#             'team_goals_h': "Over 0.5: 20% | O1.5: 60%", 'team_goals_a': "Over 0.5: 60% | O1.5: 20%",
-#             'match_goals_h': "O1.5: 60% | O2.5: 20%", 'match_goals_a': "O1.5: 100% | O2.5: 40%",
-#             'clean_sheet_h': "100%", 'clean_sheet_a': "80%",
-#             'win_rates_h': "HT: 0% | FT: 40%", 'win_rates_a': "HT: 40% | FT: 40%",
-#             'h2h_hva_record': "6-2-0", 'h2h_hva_games': 8,
-#             'h2h_all_record': "10-4-2", 'h2h_all_games': 16,
-#             'h2h_hva_ppg_str': "H:2.5 | A:0.25", 'h2h_hva_goals_str': "H:1.25 | A:0.25", 'h2h_hva_ou': "O1.5: 80% | O2.5: 40% ║ U2.5: 40% | U3.5: 50%",
-#             'insights_home': "Home goals/game: 2.00 (+23.46% 🔼 avg )\nHome corners/game: 2.00 (-61.01% 🔻 avg)",
-#             'insights_away': "Away goals/game: 1.27 (-8.21% 🔻 avg )\nAway corners/game: 4.67 (+4.63% 🔼 avg)",
-#             'insights_total_h': "Total match corners/game: 6.50 (+46.40% 🔼 avg)\nO1.5 goals: 100.00% (+27.00% 🔼 avg)\nU8.5 corners: 100.00% (+79.00% 🔼 avg)\nU10.5 corners: 100.00% (+69.00% 🔼 avg)\nU12.5 corners: 100.00% (+61.00% 🔼 avg)",
-#             'insights_total_a': "O1.5 goals: 80.00% (-2.00% 🔼 avg)\nU12.5 corners: 73.33% (-9.67% 🔼 avg)",
-#             'confidence_score': 7,
-#             'pred_outcome': "Home Win", 'pred_outcome_conf': 7,
-#             'pred_goals': "Over 1.5", 'pred_goals_conf': 7,
-#             'pred_corners': "Under 10.5", 'pred_corners_conf': 7,
-#             'rec_prediction': "Home Win",
-#             'match_id': 'Lens_Auxerre_27/04/2025_4'
-#         },
-#          { # Same date as above, different league
-#             'date': "27/04/2025", 'time': "14:30", 'country': "Austria", 'league': "Austria, Bundesliga ( 24 )", 'league_name': "Bundesliga",
-#             'home_team': "Rapid Vienna", 'home_rank': "5th/Top", 'away_team': "FC BW Linz", 'away_rank': "6th/Mid",
-#             'exp_val_h': '9.05%', 'exp_val_d': None, 'exp_val_a': None,
-#             'advice': "Double chance : Rapid Vienna or draw", 'value_bets': "H(1.62)",
-#             'form_home': "🟩⬜🟩⬜🟥//🟥🟩🟥🟥", 'form_away': "⬜🟥🟩🟥🟥//🟥🟥🟥🟥",
-#             'ppg_h': 1.6, 'ppg_h_all': 1.2, 'ppg_a': 0.8, 'ppg_a_all': 0.6,
-#             'goals_h': 2.2, 'xg_h': 1.9, 'goals_a': 1.0, 'xg_a': 1.1,
-#             'conceded_h': 1.0, 'xga_h': 1.2, 'conceded_a': 1.8, 'xga_a': 1.5,
-#             'halves_o05_h': "1H: 100% | 2H: 80%", 'halves_o05_a': "1H: 80% | 2H: 100%",
-#             'team_goals_h': "Over 0.5: 20% | O1.5: 80%", 'team_goals_a': "Over 0.5: 100% | O1.5: 60%",
-#             'match_goals_h': "O1.5: 80% | O2.5: 60%", 'match_goals_a': "O1.5: 80% | O2.5: 20%",
-#             'clean_sheet_h': "100%", 'clean_sheet_a': "40%",
-#             'win_rates_h': "HT: 80% | FT: 60%", 'win_rates_a': "HT: 20% | FT: 20%",
-#             'h2h_hva_record': "2-0-2", 'h2h_hva_games': 4,
-#             'h2h_all_record': "4-0-4", 'h2h_all_games': 8,
-#             'h2h_hva_ppg_str': "H:1.5 | A:1.5", 'h2h_hva_goals_str': "H:0.5 | A:0.5", 'h2h_hva_ou': "O1.5: 100% | O2.5: 80% ║ U2.5: 80% | U3.5: 0%",
-#             'insights_home': "Home goals/game: 1.40 (+-13.58% 🔼 avg )\nHome corners/game: 10.20 (+98.83% 🔼 avg)",
-#             'insights_away': "Away goals/game: 1.00 (-16.67% 🔻 avg )\nAway corners/game: 4.08 (-5.63% 🔻 avg)",
-#             'insights_total_h': "Total match corners/game: 11.60 (+161.26% 🔼 avg)\nO1.5 goals: 80.00% (+7.00% 🔼 avg)",
-#             'insights_total_a': "O1.5 goals: 76.92% (-2.08% 🔼 avg)\nU12.5 corners: 76.92% (-5.08% 🔼 avg)",
-#             'confidence_score': 7,
-#             'pred_outcome': "Home Win", 'pred_outcome_conf': 7,
-#             'pred_goals': "Over 1.5", 'pred_goals_conf': 7,
-#             'pred_corners': "Over 10.5", 'pred_corners_conf': 7,
-#             'rec_prediction': "Home Win",
-#             'match_id': 'Rapid Vienna_FC BW Linz_27/04/2025_5'
-#         },
-#          { # USA game
-#             'date': "27/04/2025", 'time': "01:15", 'country': "USA", 'league': "USA, Major League Soccer ( 30 )", 'league_name': "Major League Soccer",
-#             'home_team': "Orlando City SC", 'home_rank': "7th/Top", 'away_team': "Atlanta United FC", 'away_rank': "11th/Mid",
-#             'exp_val_h': None, 'exp_val_d': '2.17%', 'exp_val_a': None,
-#             'advice': "Double chance : Orlando City SC or draw", 'value_bets': "H(1.70), X(3.79)",
-#             'form_home': "🟥🟥🟩🟩⬜//⬜⬜🟩🟩⬜", 'form_away': "🟩🟥🟥⬜🟥//🟥⬜🟩⬜🟥",
-#             'ppg_h': 1.4, 'ppg_h_all': 1.8, 'ppg_a': 0.8, 'ppg_a_all': 1.4,
-#             'goals_h': 3.2, 'xg_h': 2.09, 'goals_a': 0.8, 'xg_a': 1.36,
-#             'conceded_h': 1.2, 'xga_h': 0.78, 'conceded_a': 2.2, 'xga_a': 1.15,
-#             'halves_o05_h': "1H: 80% | 2H: 80%", 'halves_o05_a': "1H: 20% | 2H: 100%",
-#             'team_goals_h': "Over 0.5: 80% | O1.5: 40%", 'team_goals_a': "Over 0.5: 80% | O1.5: 80%",
-#             'match_goals_h': "O1.5: 80% | O2.5: 80%", 'match_goals_a': "O1.5: 40% | O2.5: 40%",
-#             'clean_sheet_h': "77%", 'clean_sheet_a': "20%",
-#             'win_rates_h': "HT: 80% | FT: 80%", 'win_rates_a': "HT: 0% | FT: 0%",
-#             'h2h_hva_record': "5-5-8", 'h2h_hva_games': 18,
-#             'h2h_all_record': "8-10-12", 'h2h_all_games': 30,
-#             'h2h_hva_ppg_str': "H:1.11 | A:1.61", 'h2h_hva_goals_str': "H:1.28 | A:1.22", 'h2h_hva_ou': "O1.5: 100% | O2.5: 60% ║ U2.5: 60% | U3.5: 66%",
-#             'insights_home': "Home goals/game: 1.68 (+0.00% 🔼 avg )\nHome corners/game: 5.84 (+6.18% 🔼 avg)",
-#             'insights_away': "Away goals/game: 1.00 (-24.81% 🔻 avg)\nAway corners/game: 4.35 (+0.41% 🔼 avg)",
-#             'insights_total_h': "O1.5 goals: 77.13% (-1.87% 🔼 avg)\nU12.5 corners: 82.96% (+3.96% 🔼 avg)",
-#             'insights_total_a': "O1.5 goals: 79.17% (+0.17% 🔼 avg)",
-#             'confidence_score': 7,
-#             'pred_outcome': "Home Win", 'pred_outcome_conf': 7,
-#             'pred_goals': "Over 1.5", 'pred_goals_conf': 7,
-#             'pred_corners': "Under 12.5", 'pred_corners_conf': 7,
-#             'rec_prediction': "Home Win",
-#             'match_id': 'Orlando City SC_Atlanta United FC_27/04/2025_6'
-#         },
-#         { # Future date
-#             'date': "28/04/2025", 'time': "20:00", 'country': "Argentina", 'league': "Argentina, Liga Profesional Argentina ( 90 )", 'league_name': "Liga Profesional Argentina",
-#             'home_team': "Barracas Central", 'home_rank': "14th/Mid", 'away_team': "Union Santa Fe", 'away_rank': "22nd/Mid",
-#             'exp_val_h': '25.75%', 'exp_val_d': None, 'exp_val_a': None,
-#             'advice': "Combo Double chance : draw or Union Santa Fe and -3.5 goals", 'value_bets': "H(2.97)",
-#             'form_home': "🟥🟩⬜🟩🟩//🟥🟩🟥🟩⬜", 'form_away': "🟥🟥🟥🟥⬜//⬜⬜🟩🟥🟥",
-#             'ppg_h': 2.0, 'ppg_h_all': 1.8, 'ppg_a': 0.2, 'ppg_a_all': 1.4,
-#             'goals_h': 1.6, 'xg_h': 1.98, 'goals_a': 0.4, 'xg_a': 0.96,
-#             'conceded_h': 0.8, 'xga_h': None, 'conceded_a': 1.2, 'xga_a': None, # Missing xGA
-#             'halves_o05_h': "1H: 100% | 2H: 80%", 'halves_o05_a': "1H: 60% | 2H: 60%",
-#             'team_goals_h': "Over 0.5: 60% | O1.5: 40%", 'team_goals_a': "Over 0.5: 80% | O1.5: 60%",
-#             'match_goals_h': "O1.5: 100% | O2.5: 60%", 'match_goals_a': "O1.5: 40% | O2.5: 0%",
-#             'clean_sheet_h': "100%", 'clean_sheet_a': "40%",
-#             'win_rates_h': "HT: 80% | FT: 80%", 'win_rates_a': "HT: 0% | FT: 0%",
-#             'h2h_hva_record': "0-1-1", 'h2h_hva_games': 2,
-#             'h2h_all_record': "0-1-2", 'h2h_all_games': 3,
-#             'h2h_hva_ppg_str': "H:0.5 | A:2.0", 'h2h_hva_goals_str': "H:1.0 | A:1.5", 'h2h_hva_ou': "O1.5: 60% | O2.5: 40% ║ U2.5: 40% | U3.5: 100%",
-#             'insights_home': "Home goals/game: 1.80 (+51.26% 🔼 avg )\nHome corners/game: 2.00 (-60.71% 🔻 avg)",
-#             'insights_away': "Away goals/game: 0.33 (-59.84% 🔻 avg)\nAway corners/game: 5.67 (46.80% 🔼 avg)",
-#             'insights_total_h': "Total match goals/game: 2.68 (+32.84% 🔼 avg)\nO1.5 goals: 81.67% (+20.67% 🔼 avg)\nU8.5 corners: 83.33% (+35.33% 🔼 avg)\nU10.5 corners: 91.67% (+19.67% 🔼 avg)\nU12.5 corners: 91.67% (+6.67% 🔼 avg)",
-#             'insights_total_a': "Total match corners/game: 10.19 (+13.70% 🔼 avg)\nU2.5 goals: 77.08% (+7.08% 🔼 avg)\nU3.5 goals: 85.42% (-0.58% 🔼 avg)\nU12.5 corners: 70.83% (-14.17% 🔼 avg)",
-#             'confidence_score': 7,
-#             'pred_outcome': "Home Win", 'pred_outcome_conf': 7,
-#             'pred_goals': "Under 2.5", 'pred_goals_conf': 7,
-#             'pred_corners': "Under 10.5", 'pred_corners_conf': 7,
-#             'rec_prediction': "Under 2.5",
-#             'match_id': 'Barracas Central_Union Santa Fe_28/04/2025_7'
-#         },
-#         { # Same future date, different league
-#             'date': "28/04/2025", 'time': "21:15", 'country': "Portugal", 'league': "Portugal, Primeira Liga ( 18 )", 'league_name': "Primeira Liga",
-#             'home_team': "Casa Pia", 'home_rank': "8th/Mid", 'away_team': "Estoril", 'away_rank': "9th/Mid",
-#             'exp_val_h': '11.06%', 'exp_val_d': None, 'exp_val_a': None,
-#             'advice': "Double chance : draw or Estoril", 'value_bets': "H(2.23)",
-#             'form_home': "🟩🟩🟩🟥🟩//⬜🟥⬜🟩🟥", 'form_away': "⬜🟥⬜🟩🟥//🟥🟥🟩🟥⬜",
-#             'ppg_h': 2.4, 'ppg_h_all': 1.0, 'ppg_a': 1.0, 'ppg_a_all': 0.8,
-#             'goals_h': 1.6, 'xg_h': 0.96, 'goals_a': 1.4, 'xg_a': 1.41,
-#             'conceded_h': 1.0, 'xga_h': 1.35, 'conceded_a': 1.8, 'xga_a': 1.63,
-#             'halves_o05_h': "1H: 80% | 2H: 80%", 'halves_o05_a': "1H: 80% | 2H: 100%",
-#             'team_goals_h': "Over 0.5: 60% | O1.5: 60%", 'team_goals_a': "Over 0.5: 60% | O1.5: 60%",
-#             'match_goals_h': "O1.5: 100% | O2.5: 40%", 'match_goals_a': "O1.5: 80% | O2.5: 40%",
-#             'clean_sheet_h': "50%", 'clean_sheet_a': "40%",
-#             'win_rates_h': "HT: 20% | FT: 80%", 'win_rates_a': "HT: 20% | FT: 20%",
-#             'h2h_hva_record': "0-4-0", 'h2h_hva_games': 4,
-#             'h2h_all_record': "2-4-4", 'h2h_all_games': 10,
-#             'h2h_hva_ppg_str': "H:1.0 | A:1.0", 'h2h_hva_goals_str': "H:1.0 | A:1.0", 'h2h_hva_ou': "O1.5: 100% | O2.5: 80% ║ U2.5: 80% | U3.5: 50%",
-#             'insights_home': "Home goals/game: 1.36 (-0.94% 🔻 avg )\nHome corners/game: 4.71 (-10.20% 🔻 avg)",
-#             'insights_away': "Away goals/game: 1.33 (+14.94% 🔼 avg)\nAway corners/game: 3.40 (-20.19% 🔻 avg)",
-#             'insights_total_h': "O1.5 goals: 75.71% (+3.71% 🔼 avg)\nU12.5 corners: 82.86% (+1.86% 🔼 avg)",
-#             'insights_total_a': "Total match goals/game: 2.87 (+12.86% 🔼 avg)\nO1.5 goals: 76.67% (+4.67% 🔼 avg)\nU12.5 corners: 86.67% (+5.67% 🔼 avg)",
-#             'confidence_score': 7,
-#             'pred_outcome': "Home Win", 'pred_outcome_conf': 7,
-#             'pred_goals': "Under 2.5", 'pred_goals_conf': 7,
-#             'pred_corners': "Under 12.5", 'pred_corners_conf': 7,
-#             'rec_prediction': "Under 2.5",
-#             'match_id': 'Casa Pia_Estoril_28/04/2025_8'
-#         }
-
-#     ]
-#     return pd.DataFrame(sample_data)
-
 # --- Navigation Functions  ---
 def set_selected_match(match_id):
     st.session_state.selected_match_id = match_id
@@ -1169,8 +875,8 @@ def clear_selected_match():
     #  if 'selected_match_id' in st.session_state:
     #      del st.session_state['selected_match_id']
 
-     # Optional: Clear other states if needed when going back
-     # st.experimental_rerun() # Force rerun if state changes aren't picking up
+    # Optional: Clear other states if needed when going back
+    # st.experimental_rerun() # Force rerun if state changes aren't picking up
 
     st.session_state.selected_match_id = None
 
@@ -1270,98 +976,242 @@ def add_transient_message(msg_type, text):
 
 # This is a simplified version, adjust based on your exact prediction strings
 # --- NEW Helper function to check ALL prediction types ---
-def check_prediction_success(prediction, home_goals, away_goals, corners, home_team, away_team):
-    """Checks if a prediction was successful based on match stats."""
-    if not prediction:
-        return False
 
-    pred_input_str = prediction.strip() # Original prediction string, stripped
-    pred_lower = pred_input_str.lower() # Lowercase for general checks
+def check_prediction_success(prediction_str,
+                             home_goals, away_goals,
+                             total_corners,
+                             total_yellow_cards,
+                             home_team_name, away_team_name):
+    if not prediction_str or not isinstance(prediction_str, str) or prediction_str.strip() == '--':
+        return "PENDING"
 
-    # --- Determine Actual Result (if scores available) ---
-    actual_result_status = None
-    scores_valid = isinstance(home_goals, (int, float)) and isinstance(away_goals, (int, float))
-    if scores_valid:
-        if home_goals > away_goals: actual_result_status = "Home Win"
-        elif away_goals > home_goals: actual_result_status = "Away Win"
-        else: actual_result_status = "Draw"
-    else:
-        # If scores aren't valid, cannot check goal-based predictions
-        pass # Continue to check potential corner predictions maybe
+    pred_lower = prediction_str.strip().lower()
 
-    # --- Split potential multiple predictions (like "A(1.42), X(4.45)") ---
-    # Split by comma, then strip whitespace from each part
-    potential_preds = [p.strip() for p in pred_input_str.split(',')]
+    # --- Data Validity ---
+    scores_valid = isinstance(home_goals, (int, float)) and not math.isnan(home_goals) and \
+                   isinstance(away_goals, (int, float)) and not math.isnan(away_goals)
+    corners_valid = isinstance(total_corners, (int, float)) and not math.isnan(total_corners)
+    yellow_cards_valid = isinstance(total_yellow_cards, (int, float)) and not math.isnan(total_yellow_cards)
 
-    # --- Iterate through each part of the prediction string ---
-    for part_pred in potential_preds:
-        part_pred_lower = part_pred.lower()
+    home_team_lower = home_team_name.lower().strip() if home_team_name else ""
+    away_team_lower = away_team_name.lower().strip() if away_team_name else ""
 
-        # --- Check Goal-based predictions (W/D/L, H/A/X, Over/Under) ---
-        if scores_valid:
-            total_goals = home_goals + away_goals
-            home_team_lower = home_team.lower()
-            away_team_lower = away_team.lower()
+    # --- 1. Over/Under CORNERS ---
+    corner_ou_match = re.search(r'\b(o|u|over|under)\s*(\d+(?:\.\d+)?)\s*(?:corners?|c\b)', pred_lower)
+    if corner_ou_match:
+        if not corners_valid: return "PENDING"
+        ou_type, line_val_str = corner_ou_match.group(1).lower(), corner_ou_match.group(2)
+        line_val = float(line_val_str)
+        if total_corners == line_val: return "PUSH"
+        if ou_type.startswith('o'): return "WIN" if total_corners > line_val else "LOSS"
+        elif ou_type.startswith('u'): return "WIN" if total_corners < line_val else "LOSS"
+        return "PENDING" # Should not be reached
 
-            # 1. Check H/A/X(odds) format
-            hax_match = re.match(r'^([hax])\s*\(.*\)$', part_pred_lower) # Match H/A/X at the start, followed by (odds)
-            if hax_match:
-                bet_type = hax_match.group(1)
-                if bet_type == 'h' and actual_result_status == "Home Win": return True
-                if bet_type == 'a' and actual_result_status == "Away Win": return True
-                if bet_type == 'x' and actual_result_status == "Draw": return True
-                continue # If HAX format matched but outcome didn't, check next part_pred if any
+    # --- 2. Over/Under YELLOW CARDS ---
+    yellow_card_ou_match = re.search(
+        r'\b(o|u|over|under)\s*(\d+(?:\.\d+)?)\s*(?:yellow\s*cards?|yc\b|cards?\b(?!\s*red))', pred_lower
+    )
+    if yellow_card_ou_match:
+        if not yellow_cards_valid: return "PENDING"
+        ou_type, line_val_str = yellow_card_ou_match.group(1).lower(), yellow_card_ou_match.group(2)
+        line_val = float(line_val_str)
+        if total_yellow_cards == line_val: return "PUSH"
+        if ou_type.startswith('o'): return "WIN" if total_yellow_cards > line_val else "LOSS"
+        elif ou_type.startswith('u'): return "WIN" if total_yellow_cards < line_val else "LOSS"
+        return "PENDING" # Should not be reached
 
-            # 2. Check standard W/D/L keywords / team names (if not HAX format)
-            if actual_result_status == "Home Win" and (re.search(r'\bhome\b', part_pred_lower) or part_pred_lower == '1' or part_pred_lower == home_team_lower):
-                return True
-            if actual_result_status == "Away Win" and (re.search(r'\baway\b', part_pred_lower) or part_pred_lower == '2' or part_pred_lower == away_team_lower):
-                return True
-            if actual_result_status == "Draw" and (re.search(r'\bdraw\b', part_pred_lower) or part_pred_lower == 'x'):
-                return True
+    # --- 3. BTTS (Both Teams To Score) ---
+    is_btts_yes_pred = re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*(yes)?\b|\bgg\b', pred_lower) and \
+                       not re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*no\b|\bng\b', pred_lower)
+    is_btts_no_pred = re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*no\b|\bng\b', pred_lower)
+    if is_btts_yes_pred:
+        if not scores_valid: return "PENDING"
+        return "WIN" if home_goals > 0 and away_goals > 0 else "LOSS"
+    elif is_btts_no_pred:
+        if not scores_valid: return "PENDING"
+        return "WIN" if not (home_goals > 0 and away_goals > 0) else "LOSS"
 
-            # 3. Check Over/Under Goals (only check if WDL/HAX didn't match for this part_pred)
-            # Use the original combined lower string 'pred_lower' here, as O/U shouldn't be split
-            # Check only once, outside the loop, or ensure it only runs if WDL/HAX checks fail *for all parts*
-            # Let's adjust: Check O/U *after* the loop if no WDL/HAX match was found across all parts.
+        # --- 4. Team-Specific Over/Under Goals (Simplified and Explicit) ---
+    # This section will now look for "home team over/under X.Y" or "away team over/under X.Y"
+    # OR "{Actual Team Name} over/under X.Y"
+    debug_prediction_check = False
+    debug_target_pred_str = "home team over 1.5 goals"
+    # Pattern 4a: "home team over 1.5 goals" or "home team u 0.5"
+    ht_keyword_ou_match = re.search(r'\b(home\s*team)\s+(o|u|over|under)\s*(\d+(?:\.\d+)?)(?:\s*goals?)?', pred_lower)
+    if ht_keyword_ou_match:
+        if debug_prediction_check and pred_lower == debug_target_pred_str.lower(): print(f"Matched: Keyword Home Team O/U - Groups: {ht_keyword_ou_match.groups()}")
+        if not scores_valid: return "PENDING"
+        # Group 1 is "home team", Group 2 is o/u, Group 3 is number
+        ou_type, line_val_str = ht_keyword_ou_match.group(2).lower(), ht_keyword_ou_match.group(3)
+        line_val = float(line_val_str)
+        if home_goals == line_val: return "PUSH"
+        if ou_type.startswith('o'): return "WIN" if home_goals > line_val else "LOSS"
+        elif ou_type.startswith('u'): return "WIN" if home_goals < line_val else "LOSS"
+        return "PENDING" # Fallback for this block
 
-        # --- Check Corner-based predictions ---
-        # Use the original combined lower string 'pred_lower' here as well.
-        # Check only once, outside the loop.
+    # Pattern 4b: "away team over 1.5 goals" or "away team u 0.5"
+    at_keyword_ou_match = re.search(r'\b(away\s*team)\s+(o|u|over|under)\s*(\d+(?:\.\d+)?)(?:\s*goals?)?', pred_lower)
+    if at_keyword_ou_match:
+        if debug_prediction_check and pred_lower == debug_target_pred_str.lower(): print(f"Matched: Keyword Away Team O/U - Groups: {at_keyword_ou_match.groups()}")
+        if not scores_valid: return "PENDING"
+        ou_type, line_val_str = at_keyword_ou_match.group(2).lower(), at_keyword_ou_match.group(3)
+        line_val = float(line_val_str)
+        if away_goals == line_val: return "PUSH"
+        if ou_type.startswith('o'): return "WIN" if away_goals > line_val else "LOSS"
+        elif ou_type.startswith('u'): return "WIN" if away_goals < line_val else "LOSS"
+        return "PENDING"
 
-    # --- If loop finished without finding a WDL/HAX match, check O/U Goals and Corners ---
+    # Pattern 4c: "{Actual Home Team Name} over 1.5 goals" (if home_team_name is provided)
+    if home_team_lower:
+        actual_ht_ou_match = re.search(rf'(?:^|\s)({re.escape(home_team_lower)})\s+(o|u|over|under)\s*(\d+(?:\.\d+)?)(?:\s*goals?)?', pred_lower)
+        if actual_ht_ou_match:
+            if debug_prediction_check and pred_lower == debug_target_pred_str.lower(): print(f"Matched: Actual Home Team ({home_team_lower}) O/U - Groups: {actual_ht_ou_match.groups()}")
+            if not scores_valid: return "PENDING"
+            # Group 1 is team name, Group 2 is o/u, Group 3 is number
+            ou_type, line_val_str = actual_ht_ou_match.group(2).lower(), actual_ht_ou_match.group(3)
+            line_val = float(line_val_str)
+            if home_goals == line_val: return "PUSH"
+            if ou_type.startswith('o'): return "WIN" if home_goals > line_val else "LOSS"
+            elif ou_type.startswith('u'): return "WIN" if home_goals < line_val else "LOSS"
+            return "PENDING"
 
-    # 4. Check Over/Under Goals (using original combined prediction string)
-    if scores_valid:
-        total_goals = home_goals + away_goals
-        goal_match = re.search(r'(over|under)\s*(\d+(\.\d+)?)', pred_lower)
-        if goal_match:
-            type = goal_match.group(1)
-            value = float(goal_match.group(2))
-            # Optional refinement: check if 'goal' is mentioned
-            # if 'goal' in pred_lower or 'corner' not in pred_lower:
-            if type == "over" and total_goals > value: return True
-            if type == "under" and total_goals < value: return True
+    # Pattern 4d: "{Actual Away Team Name} over 1.5 goals" (if away_team_name is provided)
+    if away_team_lower:
+        actual_at_ou_match = re.search(rf'(?:^|\s)({re.escape(away_team_lower)})\s+(o|u|over|under)\s*(\d+(?:\.\d+)?)(?:\s*goals?)?', pred_lower)
+        if actual_at_ou_match:
+            if debug_prediction_check and pred_lower == debug_target_pred_str.lower(): print(f"Matched: Actual Away Team ({away_team_lower}) O/U - Groups: {actual_at_ou_match.groups()}")
+            if not scores_valid: return "PENDING"
+            ou_type, line_val_str = actual_at_ou_match.group(2).lower(), actual_at_ou_match.group(3)
+            line_val = float(line_val_str)
+            if away_goals == line_val: return "PUSH"
+            if ou_type.startswith('o'): return "WIN" if away_goals > line_val else "LOSS"
+            elif ou_type.startswith('u'): return "WIN" if away_goals < line_val else "LOSS"
+            return "PENDING"
 
-    # 5. Check Corner-based predictions (using original combined prediction string)
-    if isinstance(corners, (int, float)):
-        corner_match = re.search(r'(over|under)\s*(\d+(\.\d+)?)\s*corner', pred_lower) # Require 'corner'
-        if corner_match:
-            type = corner_match.group(1)
-            value = float(corner_match.group(2))
-            if type == "over" and corners > value: return True
-            if type == "under" and corners < value: return True
+    # --- 5. General Over/Under GOALS ---
+    goal_ou_match = re.fullmatch(r'(o|u|over|under)\s*(\d+(?:\.\d+)?)(?:\s*goals?)?', pred_lower)
+    if goal_ou_match:
+        if not scores_valid: return "PENDING"
+        total_actual_goals = home_goals + away_goals
+        ou_type, line_val_str = goal_ou_match.group(1).lower(), goal_ou_match.group(2)
+        line_val = float(line_val_str)
+        if total_actual_goals == line_val: return "PUSH"
+        if ou_type.startswith('o'): return "WIN" if total_actual_goals > line_val else "LOSS"
+        elif ou_type.startswith('u'): return "WIN" if total_actual_goals < line_val else "LOSS"
+        return "PENDING"
 
-    # --- Add checks for other prediction types here (e.g., BTTS) using pred_lower ---
-    # Example BTTS
-    # if scores_valid:
-    #    btts_occurred = home_goals > 0 and away_goals > 0
-    #    if (re.search(r'\bbtts\b.*\byes\b', pred_lower) or pred_lower == 'gg') and btts_occurred: return True
-    #    if (re.search(r'\bbtts\b.*\bno\b', pred_lower) or pred_lower == 'ng') and not btts_occurred: return True
+    # --- 6. WDL / HAX / Double Chance / Team Name Match Result ---
+    # This is the most complex section due to varied formats.
+    # Scores must be valid to determine win/loss for these markets.
 
+    is_prediction_format_outcome_market = False # Heuristic: does it look like an outcome market?
+    temp_potential_preds = [p.strip().lower() for p in prediction_str.split(',')] # Comma separated values like "H, X"
+    for temp_part_pred in temp_potential_preds:
+        # Check for keywords that strongly indicate an outcome market
+        if re.search(r'\b(double\s*chance|dc)\b', temp_part_pred) or \
+           re.fullmatch(r'([hax12])([x12])?', temp_part_pred) or \
+           re.fullmatch(r'([hax])\s*\(.+\)', temp_part_pred) or \
+           any(kw in temp_part_pred for kw in ['home or draw', 'away or draw', 'home or away',
+                                               'draw or home', 'draw or away', 'away or home',
+                                               'home win', 'away win']) or \
+           temp_part_pred in ['home', 'draw', 'away', '1', '2', 'x'] or \
+           (home_team_lower and temp_part_pred == home_team_lower) or \
+           (away_team_lower and temp_part_pred == away_team_lower):
+            is_prediction_format_outcome_market = True
+            break
 
-    # Return False if none of the checks above were successful
-    return False
+    if not scores_valid:
+        return "PENDING" if is_prediction_format_outcome_market else "PENDING" # Default if scores missing
+
+    actual_home_win = home_goals > away_goals
+    actual_away_win = away_goals > home_goals
+    actual_draw = home_goals == away_goals
+
+    # Process each part of a potentially comma-separated prediction (e.g., "H, X" for a WDL bet covering two outcomes)
+    for part_pred_dc in temp_potential_preds: # Use a different iterator variable name
+
+        # A. HAX format (e.g., "H(1.5)", "X", "A")
+        hax_match = re.fullmatch(r'([hax])(?:\s*\(.+\))?', part_pred_dc)
+        if hax_match:
+            bet_char = hax_match.group(1)
+            if (bet_char == 'h' and actual_home_win) or \
+               (bet_char == 'x' and actual_draw) or \
+               (bet_char == 'a' and actual_away_win):
+                return "WIN"
+            # If it's a single HAX prediction and it didn't win, it's a loss.
+            # If part of a combo, we continue to check other parts.
+            if len(temp_potential_preds) == 1: return "LOSS"
+            continue # To check next part of a combo HAX bet
+
+        # B. Explicit "Double Chance 1X", "DC X2", etc.
+        dc_explicit_match = re.search(r'\b(?:double\s*chance|dc)\s*([1x2]{2})\b', part_pred_dc)
+        if dc_explicit_match:
+            dc_symbols = "".join(sorted(dc_explicit_match.group(1))) # e.g. "x1" -> "1x"
+            if (dc_symbols == "1x" and (actual_home_win or actual_draw)) or \
+               (dc_symbols == "2x" and (actual_away_win or actual_draw)) or \
+               (dc_symbols == "12" and (actual_home_win or actual_away_win)):
+                return "WIN"
+            return "LOSS" # If explicitly "double chance X" and it lost
+
+        # C. Symbolic Double Chance (e.g., "1X", "X2", "12" without "double chance" prefix)
+        # Ensure it's exactly two chars and valid DC symbols.
+        if len(part_pred_dc) == 2 and all(c in '12x' for c in part_pred_dc) and ('x' in part_pred_dc or (part_pred_dc[0].isdigit() and part_pred_dc[1].isdigit())):
+            dc_symbols = "".join(sorted(part_pred_dc))
+            if (dc_symbols == "1x" and (actual_home_win or actual_draw)) or \
+               (dc_symbols == "2x" and (actual_away_win or actual_draw)) or \
+               (dc_symbols == "12" and (actual_home_win or actual_away_win)):
+                return "WIN"
+            # If it was a 2-char DC symbol and didn't win, it's a loss
+            # (unless part of a larger comma-separated string not yet fully evaluated)
+            if len(temp_potential_preds) == 1: return "LOSS"
+            continue
+
+        # D. Textual Double Chance ("Home or Draw", "Team A or Draw")
+        # Home or Draw
+        if (re.search(r'\bhome\b', part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)) or \
+           (home_team_lower and re.search(re.escape(home_team_lower), part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)):
+            return "WIN" if actual_home_win or actual_draw else "LOSS"
+        # Away or Draw
+        if (re.search(r'\baway\b', part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)) or \
+           (away_team_lower and re.search(re.escape(away_team_lower), part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)):
+            return "WIN" if actual_away_win or actual_draw else "LOSS"
+        # Home or Away (No Draw)
+        if (re.search(r'\bhome\b', part_pred_dc) and re.search(r'\bor\s+away\b', part_pred_dc)) or \
+           (home_team_lower and re.search(re.escape(home_team_lower), part_pred_dc) and \
+            (re.search(r'\bor\s+away\b', part_pred_dc) or (away_team_lower and re.search(r'\bor\s+' + re.escape(away_team_lower), part_pred_dc)))) or \
+           (away_team_lower and re.search(re.escape(away_team_lower), part_pred_dc) and \
+            (re.search(r'\bor\s+home\b', part_pred_dc) or (home_team_lower and re.search(r'\bor\s+' + re.escape(home_team_lower), part_pred_dc)))):
+            return "WIN" if actual_home_win or actual_away_win else "LOSS"
+
+        # E. Single WDL Keywords/Numbers/Team Names
+        # Using re.fullmatch for exact matches of these terms
+        if (re.fullmatch(r'home\s*win', part_pred_dc) and actual_home_win) or \
+           (re.fullmatch(r'home', part_pred_dc) and actual_home_win) or \
+           (re.fullmatch(r'1', part_pred_dc) and actual_home_win):
+            return "WIN"
+        
+        if (re.fullmatch(r'away\s*win', part_pred_dc) and actual_away_win) or \
+           (re.fullmatch(r'away', part_pred_dc) and actual_away_win) or \
+           (re.fullmatch(r'2', part_pred_dc) and actual_away_win):
+            return "WIN"
+
+        if (re.fullmatch(r'draw', part_pred_dc) and actual_draw) or \
+           (re.fullmatch(r'x', part_pred_dc) and actual_draw):
+            return "WIN"
+
+        if home_team_lower and re.fullmatch(home_team_lower, part_pred_dc) and actual_home_win:
+            return "WIN"
+        if away_team_lower and re.fullmatch(away_team_lower, part_pred_dc) and actual_away_win:
+            return "WIN"
+            
+    # If we iterated through all parts of a potential WDL/DC combo (like "H, X")
+    # and none of them resulted in a "WIN" (due to `return "WIN"` above),
+    # AND the format was indeed identified as an outcome market, then it's a LOSS.
+    if is_prediction_format_outcome_market: # and we haven't returned "WIN"
+        return "LOSS"
+
+    # print(f"Debug: Prediction '{prediction_str}' did not match any known betting pattern for WIN/LOSS/PUSH.")
+    return "PENDING"
 
 def colorize_performance(performance):
 		colored_performance = ""
@@ -1410,9 +1260,13 @@ def display_stat_row(label, home_value, away_value, home_align='right', label_al
     """Displays a single row, handling None values by showing '--'."""
     col1, col2, col3 = st.columns([2, 3, 2]) # Adjust ratios as needed
 
-    # Explicitly handle None before creating the final string
-    home_display = str(home_value) if home_value is not None else '--'
-    away_display = str(away_value) if away_value is not None else '--'
+    if label in ["Expected Goals (xG)","Possession (%)"]:
+        # Explicitly handle None before creating the final string
+        home_display = str(home_value) if home_value is not None else '--'
+        away_display = str(away_value) if away_value is not None else '--'
+    else: 
+        home_display = int(home_value) if home_value is not None else '--'
+        away_display = int(away_value) if away_value is not None else '--'
 
     # Use the display strings in markdown
     with col1:
@@ -1824,6 +1678,7 @@ if not selected_match_data:
                     value_bet = match.get('value_bets')
                     match_time = match.get('time', '--')
                     confidence_score = match.get('confidence_score')
+                    cards = match.get('ÝellowCards', '--')
                     
                     # --- Determine Result Status ---
                     result_status = None
@@ -1905,23 +1760,34 @@ if not selected_match_data:
 
                             # --- Check and Display Best Bet ---
                             # Pass necessary stats to the check function
-                            rec_pred_won = check_prediction_success(rec_pred, home_goals, away_goals, corners, home_team, away_team)
+                            rec_pred_parts = rec_pred.split("(")
+                            rec_pred_only = rec_pred_parts[0].strip()
+                            rec_pred_won = check_prediction_success(rec_pred_only, home_goals, away_goals, corners, cards,home_team, away_team)
                             if rec_pred:
-                                pred_display = f"{rec_pred}{confidence_text}"
-                                if rec_pred_won:
+                                pred_display = f"{rec_pred_only}{confidence_text}"
+                                if rec_pred_won == 'WIN':
                                     pred_display = f"<span style='color:green; font-weight:bold;'>{rec_pred}{confidence_text} ✅</span>" # Added checkmark
-                                st.caption(f"**Best Bet:** {pred_display}", unsafe_allow_html=True)
+                                    st.caption(f"**Best Bet:** {pred_display}", unsafe_allow_html=True)
+                                else:
+                                    st.caption(f"**Best Bet:** {pred_display}", unsafe_allow_html=True)
+
                             else:
                                 st.caption("")
+                            
 
                             # --- Check and Display Value Tip ---
                             # Pass necessary stats to the check function
-                            value_bet_won = check_prediction_success(value_bet, home_goals, away_goals, corners, home_team, away_team)
+                            value_bet_won = check_prediction_success(value_bet, home_goals, away_goals, corners, cards,home_team, away_team)
+
+                            # st.info(value_bet_won)
                             if value_bet:
                                 value_display = f"{value_bet}"
-                                if value_bet_won:
+                                if value_bet_won == "WIN":
                                     value_display = f"<span style='color:green; font-weight:bold;'>{value_bet} ✅</span>" # Added checkmark
-                                st.caption(f"**Value Tip:** {value_display}", unsafe_allow_html=True)
+                                    st.caption(f"**Value Tip:** {value_display}", unsafe_allow_html=True)
+                                else:
+                                    st.caption(f"**Value Tip:** {value_display}", unsafe_allow_html=True)
+
                             else:
                                 st.caption("")
 
@@ -1982,8 +1848,8 @@ else:
         # Join the stats with a separator and display
         stats = f"{' '.join(stats_display)}"
         
-    home_logo = selected_match_data.get('home_team_logo', None) or "https://placehold.co/100x100/000000/FFF"
-    away_logo = selected_match_data.get('away_team_logo', None) or "https://placehold.co/100x100/000000/FFF"
+    home_logo = selected_match_data.get('home_team_logo', "https://placehold.co/100x100/000000/FFF") 
+    away_logo = selected_match_data.get('away_team_logo', "https://placehold.co/100x100/000000/FFF")  
 
     
     match_cols0,match_cols1, match_cols2, match_cols3, match_cols4, match_cols5 , match_cols6 = st.columns(
@@ -2086,8 +1952,8 @@ else:
             home_poss = selected_match_data.get('HomeBallPossessionResults')
             away_poss = selected_match_data.get('AwayBallPossessionResults')
             # Add '%' only if value is not None
-            home_poss_display = f"{home_poss}%" if home_poss is not None else home_poss
-            away_poss_display = f"{away_poss}%" if away_poss is not None else away_poss
+            home_poss_display = f"{home_poss}" if home_poss is not None else home_poss
+            away_poss_display = f"{away_poss}" if away_poss is not None else away_poss
             display_stat_row("Possession (%)", home_poss_display, away_poss_display)
 
             # Corners - No special format
@@ -2167,11 +2033,14 @@ else:
     home_goals = selected_match_data.get('HomeGoals', '?')
     away_goals = selected_match_data.get('AwayGoals', '?')
     corners = selected_match_data.get('Corners') # Get corners count
+    cards = selected_match_data.get('YellowCards', '--')
     home_team = selected_match_data.get('home_team', '?')
     away_team = selected_match_data.get('away_team', '?')
     rec_pred = selected_match_data.get('rec_prediction')
     value_bet = selected_match_data.get('value_bets')
     match_time = selected_match_data.get('time', '--')
+    card_pred = selected_match_data.get('pred_card', '--')
+
     
     Last5_HomeBothTeamsToScore = selected_match_data.get('Last5_HomeBothTeamsToScore', '--')*100
     Last5HomeAvergeTotalShots = selected_match_data.get('Last5HomeAvergeTotalShots') or 0                   
@@ -2260,24 +2129,27 @@ else:
     l5AwayLeagueCleanSheet = selected_match_data.get('l5AwayLeagueCleanSheet') or 0
     
     pred_display = ""
-    rec_pred_won = check_prediction_success(rec_pred, home_goals, away_goals, corners, home_team, away_team)
+    rec_pred_parts = rec_pred.split("(")
+    rec_pred_only = rec_pred_parts[0].strip()
+    rec_pred_won = check_prediction_success(rec_pred_only, home_goals, away_goals, corners, cards, home_team, away_team)
+
     if rec_pred:
-        pred_display = f"{rec_pred}{confidence_text}"
-        if rec_pred_won:
-            pred_display = f"{rec_pred}{confidence_text} ✅" #<span style='color:green; font-size=1.5em font-weight:bold;'></span>" # Added checkmark
+        pred_display = f"{rec_pred_only}{confidence_text}"
+        if rec_pred_won == 'WIN':
+            pred_display = f"{rec_pred_only}{confidence_text} ✅" #<span style='color:green; font-size=1.5em font-weight:bold;'></span>" # Added checkmark
         # st.caption(f"**Best Bet:** {pred_display}", unsafe_allow_html=True)
         # st.success(f"**Best Bet:** {pred_display}")
-
+        
     # else:
     #     st.caption("")
         
     # --- Check and Display Value Tip ---
     # Pass necessary stats to the check function
     value_display = ""
-    value_bet_won = check_prediction_success(value_bet, home_goals, away_goals, corners, home_team, away_team)
+    value_bet_won = check_prediction_success(value_bet, home_goals, away_goals, corners, cards, home_team, away_team)
     if value_bet:
         value_display = f"{value_bet}"
-        if value_bet_won:
+        if value_bet_won == 'WIN':
             value_display = f"{value_bet} ✅" #<span style='color:green; font-weight:bold;'></span>" # Added checkmark
         # st.caption(f"**Value Tip:** {value_display}", unsafe_allow_html=True)
     # else:
@@ -2317,46 +2189,154 @@ else:
         # --- Check and Display Best Bet ---
         # Pass necessary stats to the check function      
         st.markdown("---")
-        st.markdown("##### Detailed Predictions")
-        pred_col1, pred_col2, pred_col3 = st.columns(3)
+
+        predictions_for_table = []
+        pred_col1, pred_col2 = st.columns([2,1])#, pred_col3
         with pred_col1:
+            st.markdown("##### Detailed Predictions")
             outcome_display = ""
             outcome_conf = selected_match_data.get('pred_outcome_conf')
-            outcome_val = selected_match_data.get('pred_outcome', '--')
-            outcome_bet_won = check_prediction_success(outcome_val, home_goals, away_goals, corners, home_team, away_team)
+            outcome_conf_text = f"{round(outcome_conf)}/10" if outcome_conf is not None else "--"
+            outcome_val_raw = selected_match_data.get('pred_outcome', '--').split("(")
+            outcome_val = outcome_val_raw[0].strip()
+            outcome_bet_won = check_prediction_success(outcome_val, home_goals, away_goals, corners, cards, home_team, away_team)
             if outcome_val:
-                outcome_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val}</span>"
+                outcome_display = None #f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val}</span>"
                 if outcome_bet_won:
-                    outcome_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val} ✅</span>" #color:green; 
+                    outcome_display = "WIN" #f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val} ✅</span>" #color:green; 
+            predictions_for_table.append({
+                'Market': "Match Outcome",
+                'Bet': outcome_val,
+                'Confidence': outcome_conf_text,
+                '_result_raw': outcome_bet_won#outcome_display # Store raw for potential later use
+            })
+                    
+                # st.markdown("Match Outcome:") # f"{outcome_conf}/10" if outcome_conf is not None else None)
+                # st.markdown(f"{outcome_display}", unsafe_allow_html=True) # f"{outcome_conf}/10" if outcome_conf is not None else None)
+                # st.markdown("---")
                 
-            st.markdown("Match Outcome:") # f"{outcome_conf}/10" if outcome_conf is not None else None)
-            st.markdown(f"{outcome_display}", unsafe_allow_html=True) # f"{outcome_conf}/10" if outcome_conf is not None else None)
-        with pred_col2:
+            alt_display = ""
+            alt_conf = selected_match_data.get('pred_alt_conf')
+            alt_conf_text = f"{round(alt_conf)}/10" if alt_conf is not None else "--"
+            alt_val_raw = selected_match_data.get('pred_alt', '--').split("(")
+            alt_val = alt_val_raw[0].strip()
+            alt_bet_won = check_prediction_success(alt_val, home_goals, away_goals, corners, cards, home_team, away_team)
+            if alt_val:
+                alt_display = None#f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{alt_val}</span>"
+                if alt_bet_won:
+                    alt_display = "WIN" #f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{alt_val} ✅</span>" #color:green; 
+            predictions_for_table.append({
+                'Market': "Alternative Prediction",
+                'Bet': alt_val,
+                'Confidence': alt_conf_text,
+                '_result_raw': alt_bet_won#alt_display # Store raw for potential later use
+            })
+
+                # st.markdown("Alternative Prediction:") # f"{alt_conf}/10" if alt_conf is not None else None)
+                # st.markdown(f"{alt_display}", unsafe_allow_html=True)
+                # st.caption("`Alternative bet with a good chance.`") # f"{alt_conf}/10" if alt_conf is not None else None)
+            # with pred_col2:
             goals_display = ""
             goals_conf = selected_match_data.get('pred_goals_conf')
-            goals_val = selected_match_data.get('pred_goals', '--')
-            goals_bet_won = check_prediction_success(goals_val, home_goals, away_goals, corners, home_team, away_team)
+            goals_conf_text = f"{round(goals_conf)}/10" if goals_conf is not None else "--"
+            goals_val_raw = selected_match_data.get('pred_goals', '--').split("(")
+            goals_val = f"{goals_val_raw[0].strip()} goals" if goals_val_raw else None
+            goals_bet_won = check_prediction_success(goals_val, home_goals, away_goals, corners, cards, home_team, away_team)
             if goals_val:
-                goals_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{goals_val}</span>"
+                goals_display = None #f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{goals_val}</span>"
                 if goals_bet_won:
-                    goals_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{goals_val} ✅</span>" #color:green; 
-                
-            st.markdown("Goals (O/U):") # f"{outcome_conf}/10" if outcome_conf is not None else None)
-            st.markdown(f"{goals_display}", unsafe_allow_html=True) #, f"{goals_conf}/10" if goals_conf is not None else None)
-        with pred_col3:
+                    goals_display = "WIN" #f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{goals_val} ✅</span>" #color:green; 
+            predictions_for_table.append({
+                'Market': "Goals (O/U)",
+                'Bet': goals_val,
+                'Confidence': goals_conf_text,
+                '_result_raw': goals_bet_won#goals_display # Store raw for potential later use
+            })
+
+                # st.markdown("Goals (O/U):") # f"{outcome_conf}/10" if outcome_conf is not None else None)
+                # st.markdown(f"{goals_display}", unsafe_allow_html=True) #, f"{goals_conf}/10" if goals_conf is not None else None)
+                # st.markdown("---")
+
+            cards_display = ""
+            cards_conf = selected_match_data.get('pred_cards_conf')
+            cards_conf_text = f"{round(cards_conf)}/10" if cards_conf is not None else "--"
+            cards_val_raw = selected_match_data.get('pred_cards', '--').split("(")
+            cards_val = f"{cards_val_raw[0].strip()} Yellow Cards" if cards_val_raw else None
+            cards_bet_won = check_prediction_success(cards_val, home_goals, away_goals, corners, cards, home_team, away_team)
+            if cards_val:
+                cards_display = None #f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{cards_val} ({cards_conf}/10)</span>"
+                if cards_bet_won:
+                    cards_display = "WIN" #f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{cards_val} ({cards_conf}/10) ✅</span>" #color:green; 
+            predictions_for_table.append({
+                'Market': "Cards (O/U)",
+                'Bet': cards_val,
+                'Confidence': cards_conf_text,
+                '_result_raw': cards_bet_won #cards_display # Store raw for potential later use
+            })
+                # st.markdown("Cards (O/U):") # f"{outcome_conf}/10" if outcome_conf is not "WIN" else None)
+                # st.markdown(f"{cards_display}", unsafe_allow_html=True) #, f"{cards_conf}/10" if goals_conf is not None else None)
+            # with pred_col3:
             corners_display = ""
             corners_conf = selected_match_data.get('pred_corners_conf')
-            corners_val = selected_match_data.get('pred_corners', '--')
-            corners_bet_won = check_prediction_success(corners_val, home_goals, away_goals, corners, home_team, away_team)
+            corners_conf_text = f"{round(corners_conf)}/10" if corners_conf is not None else "--"
+            corners_val_raw = selected_match_data.get('pred_corners', '--').split("(")
+            corners_val = f"{corners_val_raw[0].strip()} Corners" if corners_val_raw else None
+            corners_bet_won = check_prediction_success(corners_val, home_goals, away_goals, corners, cards, home_team, away_team)
             # Check if corner prediction is meaningful before showing
             if corners_val:
-                corners_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{corners_val}</span>"
-                if corners_bet_won:
-                    corners_display = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{corners_val} ✅</span>" #color:green; 
+                corners_display = None #f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{corners_val} ({corners_conf}/10)</span>"
+            if corners_bet_won:
+                corners_display = "WIN" #= f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{corners_val} ({corners_conf}/10) ✅</span>" #color:green; 
+            predictions_for_table.append({
+                'Market': "Corners (O/U)",
+                'Bet': corners_val,
+                'Confidence': corners_conf_text,
+                '_result_raw': corners_bet_won #corners_display # Store raw for potential later use
+            })
+                # st.markdown("Corners (O/U):") # f"" if outcome_conf is not None else None)
+                # st.markdown(f"{corners_display}", unsafe_allow_html=True)
+            #--- Create and display the table ---
+            if predictions_for_table:
+                display_table_data = []
+                for item in predictions_for_table:
+                    result_raw = item.get('_result_raw', 'PENDING') # Assuming _result_raw is 'WIN', 'LOSS', etc.
+                    result_display_text = "⏳ PENDING"
+                    if result_raw == "WIN":
+                        result_display_text = "✅ WIN"
+                    elif result_raw == "LOSS":
+                        result_display_text = "❌ LOSS"
+                    elif result_raw == "PUSH":
+                        result_display_text = "🅿️ PUSH"
+                    
+                    confidence_display_text = f"{item.get('Confidence')}" if item.get('Confidence') is not None else "-"
+
+                    display_table_data.append({
+                        "Market": item['Market'],
+                        "Prediction": item['Bet'], # Changed column name for clarity
+                        "Confidence": confidence_display_text,
+                        "Result": result_display_text
+                    })
                 
-            st.markdown("Corners (O/U):") # f"{outcome_conf}/10" if outcome_conf is not None else None)
-            st.markdown(f"{corners_display}", unsafe_allow_html=True)
-        
+                df_display_predictions = pd.DataFrame(display_table_data)
+                
+                # Use one column for the table for better width control
+                st.dataframe(
+                    df_display_predictions,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={ # Optional: Adjust widths and alignment
+                        "Market": st.column_config.TextColumn(width="medium"),
+                        "Prediction": st.column_config.TextColumn(width="medium"),
+                        "Confidence": st.column_config.TextColumn(width="small", help="Confidence score out of 10"),
+                        "Result": st.column_config.TextColumn(width="small")
+                    }
+                )
+            else:
+                st.info("No detailed predictions available for this match.")
+        with pred_col2:
+            st.markdown("##### Odds")
+
+
         st.markdown("---")
         st.markdown("##### Expected Value")
         ev_h = f"{selected_match_data.get('exp_val_h') * 100:.2f}%" if selected_match_data.get('exp_val_h') is not None else None
@@ -2443,7 +2423,7 @@ else:
             win_cols_h[0].metric("Total Shots",Last5HomeAvergeTotalShots,f"{round(l5hometotalshots_delta,2)} league avg({round(l5_home_for_league_avg_shots,2)}).")
             win_cols_h[1].metric("Shots on Goal",Last5HomeAvergeTotalShotsOnGoal,f"{round(l5homesot_delta,2)} league avg({round(l5_home_for_league_avg_sot,2)}).")
 
-            win_cols_h[0].metric("Fouls",Last5HomeAvergeTotalFouls,f"{round(lshomefouls_delta,2)} league avg({round(l5_home_for_league_avg_fouls,2)}).","inverse")
+            win_cols_h[0].metric("Fouls",Last5HomeAvergeTotalFouls,f"{round(lshomefouls_delta,2)} league avg({round(l5_home_for_league_avg_fouls,2)}).","normal")
             
             win_cols_h[1].metric("Total Corners",Last5HomeAvergeTotalcorners,f"{round(l5hometotalcorner_delta,2)} league avg({round(l5_home_for_league_avg_corners,2)}).")
             win_cols_h[0].metric("Total Yellows",Last5HomeAvergeTotalYellowCards,f"{round(l5hometotalyellows_delta,2)} league avg({round(l5_home_for_league_avg_yellow_cards,2)}).","inverse")
@@ -2493,7 +2473,7 @@ else:
             win_cols_a[0].metric("Total Shots",Last5AwayAvergeTotalShots,f"{round(l5awaytotalshots_delta,2)} league avg({round(l5_away_for_league_avg_shots,2)}).")
             win_cols_a[1].metric("Shots on Goal",Last5AwayAvergeTotalShotsOnGoal,f"{round(l5awaysot_delta,2)} league avg({round(l5_away_for_league_avg_sot,2)}).")
 
-            win_cols_a[0].metric("Fouls",Last5AwayAvergeTotalFouls,f"{round(l5awayfouls_delta,2)} league avg({round(l5_away_for_league_avg_fouls,2)}).","inverse")
+            win_cols_a[0].metric("Fouls",Last5AwayAvergeTotalFouls,f"{round(l5awayfouls_delta,2)} league avg({round(l5_away_for_league_avg_fouls,2)}).","normal")
             
             win_cols_a[1].metric("Total Corners",Last5AwayAvergeTotalcorners,f"{round(l5awaytotalcorner_delta,2)} league avg ({round(l5_away_for_league_avg_corners,2)}).")
             
@@ -2739,7 +2719,7 @@ else:
 
             st.markdown("---")
             
-            st.markdown("**Home Away Team Scored Over X Goals %**")
+            st.markdown("**Home Team Scored Over X Goals %**")
             h_team_goals_text = selected_match_data.get('team_goals_h', 'Over 0.5: 0% | O1.5: 0%')
             o05_h_pct = selected_match_data.get('team_goals_0_5_h', '')*100 #parse_specific_percent(h_team_goals_text, 'Over 0.5', 0)
             o15_h_pct_team = selected_match_data.get('team_goals_1_5_h', '')*100 #parse_specific_percent(h_team_goals_text, 'O1.5', 0)
