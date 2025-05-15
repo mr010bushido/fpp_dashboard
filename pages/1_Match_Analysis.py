@@ -942,26 +942,6 @@ def reset_all_filters():
     # This requires storing the key/value of the latest week option
     # if 'latest_week_key' in st.session_state:
     #     st.session_state.week_selector_key = st.session_state.latest_week_key
-# def reset_all_filters():
-#     """
-#     Reset all filters to default values (e.g., "All") and clear selected match.
-#     - Determine the default date (latest available)
-#     - Recalculate valid dates here or pass the default date value if needed
-#     - This logic assumes raw_dates_sorted is available or recalculated easily
-#     - Let's assume we stored the default date value in session state earlier or can calculate it
-#     """
-#     # if 'default_date_value' in st.session_state:
-#     #     st.session_state.date_filter = st.session_state.default_date_value
-#     # Reset other filters to "All"
-#     st.session_state.day_filter = "All Dates"
-#     st.session_state.country_filter = "All"
-#     st.session_state.league_filter = "All"
-#     st.session_state.rec_bet_filter = ["All"] # Note: Multiselect needs a list
-#     st.session_state.value_bet_filter = ["All"] # Note: Multiselect needs a list
-#     st.session_state.include_no_score = True # Reset checkbox to default state
-#     st.session_state.confidence_filter = st.session_state.get('default_confidence_range', (0, 10))
-#     # Clear selected match if any
-#     clear_selected_match()
 
 def add_transient_message(msg_type, text):
     """Adds a message with type and timestamp to the session state list."""
@@ -977,11 +957,7 @@ def add_transient_message(msg_type, text):
 # This is a simplified version, adjust based on your exact prediction strings
 # --- NEW Helper function to check ALL prediction types ---
 
-def check_prediction_success(prediction_str,
-                             home_goals, away_goals,
-                             total_corners,
-                             total_yellow_cards,
-                             home_team_name, away_team_name):
+def check_prediction_success(prediction_str, home_goals, away_goals, total_corners, total_yellow_cards, home_team_name, away_team_name):
     if not prediction_str or not isinstance(prediction_str, str) or prediction_str.strip() == '--':
         return "PENDING"
 
@@ -989,7 +965,7 @@ def check_prediction_success(prediction_str,
 
     # --- Data Validity ---
     scores_valid = isinstance(home_goals, (int, float)) and not math.isnan(home_goals) and \
-                   isinstance(away_goals, (int, float)) and not math.isnan(away_goals)
+                    isinstance(away_goals, (int, float)) and not math.isnan(away_goals)
     corners_valid = isinstance(total_corners, (int, float)) and not math.isnan(total_corners)
     yellow_cards_valid = isinstance(total_yellow_cards, (int, float)) and not math.isnan(total_yellow_cards)
 
@@ -1022,7 +998,7 @@ def check_prediction_success(prediction_str,
 
     # --- 3. BTTS (Both Teams To Score) ---
     is_btts_yes_pred = re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*(yes)?\b|\bgg\b', pred_lower) and \
-                       not re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*no\b|\bng\b', pred_lower)
+                        not re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*no\b|\bng\b', pred_lower)
     is_btts_no_pred = re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*no\b|\bng\b', pred_lower)
     if is_btts_yes_pred:
         if not scores_valid: return "PENDING"
@@ -1109,14 +1085,14 @@ def check_prediction_success(prediction_str,
     for temp_part_pred in temp_potential_preds:
         # Check for keywords that strongly indicate an outcome market
         if re.search(r'\b(double\s*chance|dc)\b', temp_part_pred) or \
-           re.fullmatch(r'([hax12])([x12])?', temp_part_pred) or \
-           re.fullmatch(r'([hax])\s*\(.+\)', temp_part_pred) or \
-           any(kw in temp_part_pred for kw in ['home or draw', 'away or draw', 'home or away',
-                                               'draw or home', 'draw or away', 'away or home',
-                                               'home win', 'away win']) or \
-           temp_part_pred in ['home', 'draw', 'away', '1', '2', 'x'] or \
-           (home_team_lower and temp_part_pred == home_team_lower) or \
-           (away_team_lower and temp_part_pred == away_team_lower):
+            re.fullmatch(r'([hax12])([x12])?', temp_part_pred) or \
+            re.fullmatch(r'([hax])\s*\(.+\)', temp_part_pred) or \
+            any(kw in temp_part_pred for kw in ['home or draw', 'away or draw', 'home or away',
+                                                'draw or home', 'draw or away', 'away or home',
+                                                'home win', 'away win']) or \
+            temp_part_pred in ['home', 'draw', 'away', '1', '2', 'x'] or \
+            (home_team_lower and temp_part_pred == home_team_lower) or \
+            (away_team_lower and temp_part_pred == away_team_lower):
             is_prediction_format_outcome_market = True
             break
 
@@ -1135,8 +1111,8 @@ def check_prediction_success(prediction_str,
         if hax_match:
             bet_char = hax_match.group(1)
             if (bet_char == 'h' and actual_home_win) or \
-               (bet_char == 'x' and actual_draw) or \
-               (bet_char == 'a' and actual_away_win):
+                (bet_char == 'x' and actual_draw) or \
+                (bet_char == 'a' and actual_away_win):
                 return "WIN"
             # If it's a single HAX prediction and it didn't win, it's a loss.
             # If part of a combo, we continue to check other parts.
@@ -1148,8 +1124,8 @@ def check_prediction_success(prediction_str,
         if dc_explicit_match:
             dc_symbols = "".join(sorted(dc_explicit_match.group(1))) # e.g. "x1" -> "1x"
             if (dc_symbols == "1x" and (actual_home_win or actual_draw)) or \
-               (dc_symbols == "2x" and (actual_away_win or actual_draw)) or \
-               (dc_symbols == "12" and (actual_home_win or actual_away_win)):
+                (dc_symbols == "2x" and (actual_away_win or actual_draw)) or \
+                (dc_symbols == "12" and (actual_home_win or actual_away_win)):
                 return "WIN"
             return "LOSS" # If explicitly "double chance X" and it lost
 
@@ -1158,8 +1134,8 @@ def check_prediction_success(prediction_str,
         if len(part_pred_dc) == 2 and all(c in '12x' for c in part_pred_dc) and ('x' in part_pred_dc or (part_pred_dc[0].isdigit() and part_pred_dc[1].isdigit())):
             dc_symbols = "".join(sorted(part_pred_dc))
             if (dc_symbols == "1x" and (actual_home_win or actual_draw)) or \
-               (dc_symbols == "2x" and (actual_away_win or actual_draw)) or \
-               (dc_symbols == "12" and (actual_home_win or actual_away_win)):
+                (dc_symbols == "2x" and (actual_away_win or actual_draw)) or \
+                (dc_symbols == "12" and (actual_home_win or actual_away_win)):
                 return "WIN"
             # If it was a 2-char DC symbol and didn't win, it's a loss
             # (unless part of a larger comma-separated string not yet fully evaluated)
@@ -1169,34 +1145,34 @@ def check_prediction_success(prediction_str,
         # D. Textual Double Chance ("Home or Draw", "Team A or Draw")
         # Home or Draw
         if (re.search(r'\bhome\b', part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)) or \
-           (home_team_lower and re.search(re.escape(home_team_lower), part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)):
+            (home_team_lower and re.search(re.escape(home_team_lower), part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)):
             return "WIN" if actual_home_win or actual_draw else "LOSS"
         # Away or Draw
         if (re.search(r'\baway\b', part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)) or \
-           (away_team_lower and re.search(re.escape(away_team_lower), part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)):
+            (away_team_lower and re.search(re.escape(away_team_lower), part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)):
             return "WIN" if actual_away_win or actual_draw else "LOSS"
         # Home or Away (No Draw)
         if (re.search(r'\bhome\b', part_pred_dc) and re.search(r'\bor\s+away\b', part_pred_dc)) or \
-           (home_team_lower and re.search(re.escape(home_team_lower), part_pred_dc) and \
+            (home_team_lower and re.search(re.escape(home_team_lower), part_pred_dc) and \
             (re.search(r'\bor\s+away\b', part_pred_dc) or (away_team_lower and re.search(r'\bor\s+' + re.escape(away_team_lower), part_pred_dc)))) or \
-           (away_team_lower and re.search(re.escape(away_team_lower), part_pred_dc) and \
+            (away_team_lower and re.search(re.escape(away_team_lower), part_pred_dc) and \
             (re.search(r'\bor\s+home\b', part_pred_dc) or (home_team_lower and re.search(r'\bor\s+' + re.escape(home_team_lower), part_pred_dc)))):
             return "WIN" if actual_home_win or actual_away_win else "LOSS"
 
         # E. Single WDL Keywords/Numbers/Team Names
         # Using re.fullmatch for exact matches of these terms
         if (re.fullmatch(r'home\s*win', part_pred_dc) and actual_home_win) or \
-           (re.fullmatch(r'home', part_pred_dc) and actual_home_win) or \
-           (re.fullmatch(r'1', part_pred_dc) and actual_home_win):
+            (re.fullmatch(r'home', part_pred_dc) and actual_home_win) or \
+            (re.fullmatch(r'1', part_pred_dc) and actual_home_win):
             return "WIN"
         
         if (re.fullmatch(r'away\s*win', part_pred_dc) and actual_away_win) or \
-           (re.fullmatch(r'away', part_pred_dc) and actual_away_win) or \
-           (re.fullmatch(r'2', part_pred_dc) and actual_away_win):
+            (re.fullmatch(r'away', part_pred_dc) and actual_away_win) or \
+            (re.fullmatch(r'2', part_pred_dc) and actual_away_win):
             return "WIN"
 
         if (re.fullmatch(r'draw', part_pred_dc) and actual_draw) or \
-           (re.fullmatch(r'x', part_pred_dc) and actual_draw):
+            (re.fullmatch(r'x', part_pred_dc) and actual_draw):
             return "WIN"
 
         if home_team_lower and re.fullmatch(home_team_lower, part_pred_dc) and actual_home_win:
@@ -1275,7 +1251,191 @@ def display_stat_row(label, home_value, away_value, home_align='right', label_al
         st.markdown(f"<div style='text-align: {label_align}; font-weight: {label_weight};'>{label}</div>", unsafe_allow_html=True)
     with col3:
         st.markdown(f"<div style='text-align: {away_align};'>{away_display}</div>", unsafe_allow_html=True)
+# def parse_odds_field_name(field_name):
+#     if not field_name.endswith("Odds"): return None
+#     parts = field_name[:-4].split('_'); 
+#     if not parts: return None
+#     market = parts[0]; bet_specific_parts = parts[1:]
+#     bet_specific = " ".join(bet_specific_parts)
+#     return {'market': market, 'bet_specific': bet_specific, 'raw_bet_type': "_".join(parts[1:]) + "Odds"}
 
+# def group_odds_by_market(match_data):
+#     grouped_odds = defaultdict(list)
+#     market_order = {} # To maintain a rough order of markets
+
+#     # Define a preferred order for bet specifics within common markets
+#     bet_specific_order = {
+#         "Match Winner": ["Home", "Draw", "Away"],
+#         "Double Chance": ["Home/Draw", "Home/Away", "Draw/Away"],
+#         "Home/Away": ["Home", "Away"], # Draw No Bet essentially
+#         "Both Teams Score": ["Yes", "No"],
+#         "First Half Winner": ["Home", "Draw", "Away"],
+#         "Second Half Winner": ["Home", "Draw", "Away"],
+#         # For O/U, sorting will be mostly numerical based on the line
+#     }
+
+#     i = 0
+#     for field, value in match_data.items():
+#         parsed = parse_odds_field_name(field)
+#         if parsed:
+#             if parsed['market'] not in market_order:
+#                 market_order[parsed['market']] = i
+#                 i += 1
+            
+#             grouped_odds[parsed['market']].append({
+#                 'bet_label': parsed['bet_specific'],
+#                 'odds_value': value if pd.notna(value) else "--", # Handle NaN odds
+#                 'original_field': field
+#             })
+
+#     # Sort markets by their appearance order (or define a custom market order)
+#     sorted_grouped_odds = dict(sorted(grouped_odds.items(), key=lambda item: market_order.get(item[0], 999)))
+    
+#     # Sort bets within each market
+#     for market, bets in sorted_grouped_odds.items():
+#         if market in bet_specific_order:
+#             order_list = bet_specific_order[market]
+#             bets.sort(key=lambda x: order_list.index(x['bet_label']) if x['bet_label'] in order_list else 999)
+#         elif "Over/Under" in market or "Over Under" in market:
+#             # Custom sort for Over/Under: Over X.X then Under X.X, then by X.X value
+#             def sort_key_ou(bet_item):
+#                 label = bet_item['bet_label']
+#                 is_over = label.lower().startswith('over') or label.lower().startswith('o ')
+#                 line_match = re.search(r'(\d+(?:\.\d+)?)', label)
+#                 line_val = float(line_match.group(1)) if line_match else float('inf')
+#                 return (line_val, not is_over) # Sort by line, then Over before Under
+#             bets.sort(key=sort_key_ou)
+#         else:
+#             bets.sort(key=lambda x: x['bet_label']) # Default alphabetical
+
+#     return sorted_grouped_odds
+
+# def parse_odds_field_name(field_name):
+    # if not field_name.endswith("Odds"): return None
+    # parts = field_name[:-4].split('_');
+    # if not parts: return None
+    # market = parts[0]; bet_specific_parts = parts[1:]
+    # bet_specific = " ".join(bet_specific_parts)
+    # return {'market': market, 'bet_specific': bet_specific, 'raw_bet_type': "_".join(parts[1:]) + "Odds"}
+
+# def group_odds_by_market(match_data):
+#     grouped_odds = defaultdict(list)
+#     market_order = {} 
+#     bet_specific_order = {
+#         "Match Winner": ["Home", "Draw", "Away"], # Corresponds to 1, X, 2
+#         "Double Chance": ["Home/Draw", "Home/Away", "Draw/Away"], # Corresponds to 1X, 12, X2
+#         "Home/Away": ["Home", "Away"],
+#         "Both Teams Score": ["Yes", "No"],
+#         "Result & BTTS": [ # Define a specific order for this complex market
+#             "Home Yes", "Away Yes", "Draw Yes",
+#             "Home No", "Away No", "Draw No"
+#         ],
+#         # Add other markets with specific outcome orders if needed
+#     }
+#     # Mapping for display labels if different from bet_label
+#     display_label_map = {
+#         "Match Winner": {"Home": "1", "Draw": "X", "Away": "2"},
+#         "Double Chance": {"Home/Draw": "1X", "Home/Away": "12", "Draw/Away": "X2"}
+#     }
+#     i = 0
+#     for field, value in match_data.items():
+#         parsed = parse_odds_field_name(field)
+#         if parsed:
+#             if parsed['market'] not in market_order:
+#                 market_order[parsed['market']] = i; i += 1
+            
+#             display_bet_label = parsed['bet_specific']
+#             # Check if there's a specific display label for this market and bet
+#             if parsed['market'] in display_label_map and parsed['bet_specific'] in display_label_map[parsed['market']]:
+#                 display_bet_label = display_label_map[parsed['market']][parsed['bet_specific']]
+
+#             grouped_odds[parsed['market']].append({
+#                 'bet_label': parsed['bet_specific'], # Original label for sorting/logic
+#                 'display_label': display_bet_label,  # Label for display
+#                 'odds_value': value if pd.notna(value) else "N/A",
+#                 'original_field': field
+#             })
+#     sorted_grouped_odds = dict(sorted(grouped_odds.items(), key=lambda item: market_order.get(item[0], 999)))
+#     for market, bets in sorted_grouped_odds.items():
+#         if market in bet_specific_order:
+#             order_list = bet_specific_order[market]
+#             # Sort using the original 'bet_label' for consistency with the order_list keys
+#             bets.sort(key=lambda x: order_list.index(x['bet_label']) if x['bet_label'] in order_list else 999)
+#         elif "Over/Under" in market or "Over Under" in market: # Keep O/U sorting
+#             def sort_key_ou(bet_item):
+#                 label = bet_item['bet_label'].lower()
+#                 is_over = label.startswith('over') or label.startswith('o ')
+#                 line_match = re.search(r'(\d+(?:\.\d+)?)', label)
+#                 line_val = float(line_match.group(1)) if line_match else float('inf')
+#                 return (line_val, not is_over)
+#             bets.sort(key=sort_key_ou)
+#         else:
+#             bets.sort(key=lambda x: x['display_label']) # Default alphabetical on display_label
+#     return sorted_grouped_odds
+
+def parse_odds_field_name(field_name):
+    if not field_name.endswith("Odds"): return None
+    parts = field_name[:-4].split('_');
+    if not parts: return None
+    market = parts[0]; bet_specific_parts = parts[1:]
+    bet_specific = " ".join(bet_specific_parts)
+    return {'market': market, 'bet_specific': bet_specific, 'raw_bet_type': "_".join(parts[1:]) + "Odds"}
+
+def group_odds_by_market(match_data):
+    grouped_odds = defaultdict(list)
+    market_order = {}
+    bet_specific_order = {
+        "Match Winner": ["Home", "Draw", "Away"],
+        "Double Chance": ["Home/Draw", "Home/Away", "Draw/Away"],
+        "Home/Away": ["Home", "Away"],
+        "Both Teams Score": ["Yes", "No"],
+        "Result & BTTS": ["Home Yes", "Away Yes", "Draw Yes", "Home No", "Away No", "Draw No"],
+        "First Half Winner": ["Home", "Draw", "Away"],
+        "Second Half Winner": ["Home", "Draw", "Away"],
+        "Both Teams Score - First Half": ["Yes", "No"], # Added
+        "Draw No Bet (1st Half)": ["Home", "Away"],      # Added
+        "Draw No Bet (2nd Half)": ["Home", "Away"],      # Added
+        # Add more fixed outcome markets here if they have a clear, limited set of outcomes
+    }
+    display_label_map = {
+        "Match Winner": {"Home": "1", "Draw": "X", "Away": "2"},
+        "Double Chance": {"Home/Draw": "1X", "Home/Away": "12", "Draw/Away": "X2"},
+        "First Half Winner": {"Home": "1", "Draw": "X", "Away": "2"},# (FH)
+        "Second Half Winner": {"Home": "1", "Draw": "X", "Away": "2"},# (SH)
+        "Draw No Bet (1st Half)": {"Home": "Home (DNB)", "Away": "Away (DNB)"},
+        "Draw No Bet (2nd Half)": {"Home": "Home (DNB)", "Away": "Away (DNB)"},
+    }
+    i = 0
+    for field, value in match_data.items():
+        parsed = parse_odds_field_name(field)
+        if parsed:
+            if parsed['market'] not in market_order:
+                market_order[parsed['market']] = i; i += 1
+            display_bet_label = parsed['bet_specific']
+            if parsed['market'] in display_label_map and parsed['bet_specific'] in display_label_map[parsed['market']]:
+                display_bet_label = display_label_map[parsed['market']][parsed['bet_specific']]
+            grouped_odds[parsed['market']].append({
+                'bet_label': parsed['bet_specific'],
+                'display_label': display_bet_label,
+                'odds_value': value if pd.notna(value) else "--",
+                'original_field': field
+            })
+    sorted_grouped_odds = dict(sorted(grouped_odds.items(), key=lambda item: market_order.get(item[0], 999)))
+    for market, bets in sorted_grouped_odds.items():
+        if market in bet_specific_order:
+            order_list = bet_specific_order[market]
+            bets.sort(key=lambda x: order_list.index(x['bet_label']) if x['bet_label'] in order_list else 999)
+        elif "Over/Under" in market or "Over Under" in market or "Total" in market: # For O/U type markets
+            def sort_key_ou(bet_item):
+                label = bet_item['bet_label'].lower()
+                is_over = 'over' in label or label.startswith('o ')
+                line_match = re.search(r'(\d+(?:\.\d+)?)', label)
+                line_val = float(line_match.group(1)) if line_match else float('inf')
+                return (line_val, not is_over) # Sort by line, then Over before Under
+            bets.sort(key=sort_key_ou)
+        else:
+            bets.sort(key=lambda x: x['display_label'])
+    return sorted_grouped_odds
 # --- Streamlit App ---
 # st.set_page_config(layout="wide")
 
@@ -1430,16 +1590,100 @@ if current_day_selection not in date_filter_options:
 st.sidebar.selectbox("Date:", options=date_filter_options, key='day_filter') # Use session state key 
 
 # Country and League filters (Keep "All" option)
-filter_countries = ["All"]
-if not weekly_df.empty and 'country' in weekly_df.columns:
-    filter_countries = ["All"] + sorted(weekly_df['country'].dropna().unique())
-st.sidebar.selectbox("Country:", options=filter_countries, key='country_filter')
+# filter_countries = ["All"]
+# if not weekly_df.empty and 'country' in weekly_df.columns:
+#     filter_countries = ["All"] + sorted(weekly_df['country'].dropna().unique())
+# st.sidebar.selectbox("Country:", options=filter_countries, index=default_country_index, key='country_filter')
 
-# Example: League Filter
-filter_leagues = ["All"]
-if not weekly_df.empty and 'league_name' in weekly_df.columns:
-    filter_leagues = ["All"] + sorted(weekly_df['league_name'].dropna().unique())
-st.sidebar.selectbox("League:", options=filter_leagues, key='league_filter')
+# # Example: League Filter
+# filter_leagues = ["All"]
+# if not weekly_df.empty and 'league_name' in weekly_df.columns:
+#     filter_leagues = ["All"] + sorted(weekly_df['league_name'].dropna().unique())
+# st.sidebar.selectbox("League:", options=filter_leagues, key='league_filter')
+
+filter_countries_options = ["All"]
+if not weekly_df.empty and 'country' in weekly_df.columns:
+    unique_countries = sorted(weekly_df['country'].dropna().unique())
+    filter_countries_options.extend(unique_countries)
+    
+# Determine default index for country, ensuring "All" is an option
+default_country_index = 0
+if st.session_state.country_filter in filter_countries_options:
+    default_country_index = filter_countries_options.index(st.session_state.country_filter)
+else: # If persisted state is somehow invalid, default to "All"
+    st.session_state.country_filter = "All"
+
+def country_changed():
+    # When country changes, reset the selected league to "All" for that country
+    # and update the available league options.
+    # The actual selected_country is already in st.session_state.country_filter_cascade
+    # This function primarily handles the side effects of that change.
+    st.session_state.league_filter = "All" # Reset league selection
+
+# Store the selected country in its own session state variable for clarity and direct use
+# The selectbox widget itself will also store its value under its key ('country_filter_cascade')
+selected_country_value = st.sidebar.selectbox(
+    "Country:", 
+    options=filter_countries_options, 
+    index=default_country_index, 
+    key='country_filter_cascade', # Use a unique key for this specific selectbox
+    on_change=country_changed # Callback to reset league when country changes
+)
+
+# Update our specific session state variable if it differs from the widget's state
+# This helps ensure our logic uses the most up-to-date value consistently.
+if st.session_state.country_filter != selected_country_value:
+    st.session_state.country_filter = selected_country_value
+    # No need to call country_changed() here again if on_change is used,
+    # but if on_change is not used, you'd put the reset logic here.
+
+# --- League Filter (Dynamically Populated) ---
+leagues_for_selected_country = ["All"] # Default if no country or "All" countries selected
+
+if st.session_state.country_filter != "All":
+    # Filter weekly_df for the selected country
+    country_specific_df = weekly_df[weekly_df['country'] == st.session_state.country_filter]
+    if not country_specific_df.empty and 'league_name' in country_specific_df.columns:
+        unique_leagues_in_country = sorted(country_specific_df['league_name'].dropna().unique())
+        leagues_for_selected_country.extend(unique_leagues_in_country)
+elif not weekly_df.empty and 'league_name' in weekly_df.columns: # If "All" countries is selected
+    # Show all unique leagues from the entire DataFrame
+    all_unique_leagues = sorted(weekly_df['league_name'].dropna().unique())
+    leagues_for_selected_country.extend(all_unique_leagues)
+
+
+# Determine default index for league
+default_league_index = 0
+# If the previously selected league is still in the new list of options, keep it.
+# Otherwise, default to "All".
+if st.session_state.league_filter in leagues_for_selected_country:
+    default_league_index = leagues_for_selected_country.index(st.session_state.league_filter)
+else:
+    st.session_state.league_filter = "All" # Reset to "All" if previous selection invalid
+
+selected_league_value = st.sidebar.selectbox(
+    "League:", 
+    options=leagues_for_selected_country, 
+    index=default_league_index,
+    key='league_filter_cascade' # Use a unique key
+)
+
+# Update our specific session state variable for league if it differs
+if st.session_state.league_filter != selected_league_value:
+    st.session_state.league_filter = selected_league_value
+
+
+# --- Apply Filters to your DataFrame for Display/Processing ---
+filtered_display_df = weekly_df.copy()
+
+# Apply country filter
+if st.session_state.country_filter != "All":
+    filtered_display_df = filtered_display_df[filtered_display_df['country'] == st.session_state.country_filter]
+
+# Apply league filter
+if st.session_state.league_filter != "All":
+    filtered_display_df = filtered_display_df[filtered_display_df['league_name'] == st.session_state.league_filter]
+
 
 # Extract Recommended Bet options
 rec_bet_options = ["All"]
@@ -2165,7 +2409,7 @@ else:
     pred_cols4.info(f"**Advice:** {selected_match_data.get('advice', '--')}")
 
     # --- Tabs for Detailed Stats (Added Recommendations Tab) ---
-    tab_titles = ["🎯 Recommendations", "📈 Performance & Goals", "🤝 H2H", "✨ Insights"]
+    tab_titles = ["🎯 Recommendations", "📈 Performance & Goals", "🤝 H2H", "✨ Insights"]#, "🎲 Odds"
     tabs = st.tabs(tab_titles)
 
     # Match report 
@@ -2178,21 +2422,15 @@ else:
     # Recommendations Tab (New)
     with tabs[0]:
         st.markdown("#### ⭐ Prediction Overview")
-        rec_col1, rec_col2 = st.columns([0.5,4])
+        rec_col1, rec_col2 = st.columns([3,2])
         with rec_col1:
-            
             st.metric("Overall Confidence", f"{confidence_score}") #/10
-        with rec_col2:
             st.success(f"**Best Bet:** {pred_display}")
-        #      st.info(f"**Advice:** {selected_match_data.get('advice', '--')}")
-        #      st.warning(f"**Value Bets:** `{selected_match_data.get('value_bets', '--')}`")
-        # --- Check and Display Best Bet ---
-        # Pass necessary stats to the check function      
-        st.markdown("---")
+            st.markdown("---")
 
-        predictions_for_table = []
-        pred_col1, pred_col2 = st.columns([2,1])#, pred_col3
-        with pred_col1:
+            predictions_for_table = []
+            # pred_col1, pred_col2 = st.columns([2,1])#, pred_col3
+            # with pred_col1:
             st.markdown("##### Detailed Predictions")
             outcome_display = ""
             outcome_conf = selected_match_data.get('pred_outcome_conf')
@@ -2333,36 +2571,390 @@ else:
                 )
             else:
                 st.info("No detailed predictions available for this match.")
-        with pred_col2:
+            # with pred_col2:
+                
+
+
+            st.markdown("---")
+            st.markdown("##### Expected Value")
+            ev_h = f"{selected_match_data.get('exp_val_h') * 100:.2f}%" if selected_match_data.get('exp_val_h') is not None else None
+            ev_d = f"{selected_match_data.get('exp_val_d') * 100:.2f}%" if selected_match_data.get('exp_val_d') is not None else None
+            ev_a = f"{selected_match_data.get('exp_val_a') * 100:.2f}%" if selected_match_data.get('exp_val_a') is not None else None
+            
+            pred_col4, pred_col5, pred_col6 = st.columns(3)
+            if any([ev_h, ev_d, ev_a]):
+                with pred_col4:
+                    # st.caption(f"**EV (Home):** {ev_h or '--'}")
+                    st.metric("EV (Home)", ev_h or '--')
+                with pred_col5:
+                    # st.caption(f"**EV (Draw):** {ev_d or '--'}")
+                    st.metric("EV (Draw)", ev_d or '--')
+                with pred_col6:
+                    # st.caption(f"**EV (Away):** {ev_a or '--'}")
+                    st.metric("EV (Away)", ev_a or '--')
+                #  st.caption(f"**EV:** H: {ev_h or '--'} | D: {ev_d or '--'} | A: {ev_a or '--'}")
+            else:
+                st.caption("No Expected Value data.")
+
+        with rec_col2:
             st.markdown("##### Odds")
+            
+            # if not selected_match_data:
+                #     st.info("Select a match to view odds.")
+                # else:
+                    # Group the odds from selected_match_data
+                    # odds_by_market = group_odds_by_market(selected_match_data)
+
+                    # if not odds_by_market:
+                    #     st.info("No odds data available for this match.")
+                    # else:
+                    #     for market_name, odds_list in odds_by_market.items():
+                    #         with st.expander(f"{market_name}", expanded=False): # Start collapsed
+                    #             # Determine number of columns based on odds_list length for that market
+                    #             # Max 3 columns for readability, or fewer if fewer items
+                    #             num_items = len(odds_list)
+                    #             if num_items == 0:
+                    #                 st.caption("No odds for this market.")
+                    #                 continue
+                                
+                    #             cols = st.columns(min(num_items, 3)) 
+                    #             col_idx = 0
+                    #             for odd_item in odds_list:
+                    #                 with cols[col_idx % len(cols)]:
+                    #                     bet_label = odd_item['bet_label']
+                    #                     odds_val = odd_item['odds_value']
+                                        
+                    #                     # For Over/Under, try to make label more concise if it's long
+                    #                     if "Over/Under" in market_name or "Over Under" in market_name:
+                    #                         # 'bet_label' is already 'Over X.X' or 'Under X.X'
+                    #                         display_label = bet_label 
+                    #                     elif market_name == "Total - Home" or market_name == "Total - Away":
+                    #                         display_label = bet_label # e.g. "Over 0.5"
+                    #                     else:
+                    #                         display_label = bet_label
+
+                    #                     # Display using st.metric or st.text_input (as placeholder)
+                    #                     if isinstance(odds_val, (int, float)):
+                    #                         st.metric(label=display_label, value=f"{odds_val:.2f}")
+                    #                     else: # For "N/A" or other non-numeric
+                    #                         st.metric(label=display_label, value=str(odds_val)) 
+                                        
+                    #                     # If you want to use text_input as a placeholder for future editing:
+                    #                     # st.text_input(label=display_label, value=str(odds_val), key=odd_item['original_field'], disabled=True)
+                    #                 col_idx += 1
+            
+
+                # st.markdown(custom_css, unsafe_allow_html=True) # UNCOMMENT TO APPLY CSS
 
 
-        st.markdown("---")
-        st.markdown("##### Expected Value")
-        ev_h = f"{selected_match_data.get('exp_val_h') * 100:.2f}%" if selected_match_data.get('exp_val_h') is not None else None
-        ev_d = f"{selected_match_data.get('exp_val_d') * 100:.2f}%" if selected_match_data.get('exp_val_d') is not None else None
-        ev_a = f"{selected_match_data.get('exp_val_a') * 100:.2f}%" if selected_match_data.get('exp_val_a') is not None else None
-        
-        pred_col4, pred_col5, pred_col6 = st.columns(3)
-        if any([ev_h, ev_d, ev_a]):
-            with pred_col4:
-                # st.caption(f"**EV (Home):** {ev_h or '--'}")
-                st.metric("EV (Home)", ev_h or '--')
-            with pred_col5:
-                # st.caption(f"**EV (Draw):** {ev_d or '--'}")
-                st.metric("EV (Draw)", ev_d or '--')
-            with pred_col6:
-                # st.caption(f"**EV (Away):** {ev_a or '--'}")
-                st.metric("EV (Away)", ev_a or '--')
-            #  st.caption(f"**EV:** H: {ev_h or '--'} | D: {ev_d or '--'} | A: {ev_a or '--'}")
-        else:
-            st.caption("No Expected Value data.")
+                # with tabs[1]: # Your "Odds" tab
+                    # st.markdown(f"### 🎲 Odds for {selected_match_data.get('HomeTeam', '')} vs {selected_match_data.get('AwayTeam', '')}")
 
+                # if not selected_match_data:
+                    #  st.info("Select a match to view odds.")
+                # else:
+                #     odds_by_market = group_odds_by_market(selected_match_data)
+
+                #     if not odds_by_market:
+                #         st.info("No odds data available for this match.")
+                #     else:
+                #         # Define markets to display in the table format
+                #         table_markets = ["Match Winner", "Double Chance", "Both Teams Score", "Result & BTTS", "Total-Home", "Total-Away", "Goals Over/Under", "Corners Over Under", "Cards Over/Under"]
+                #         # Other markets (like O/U goals, corners, cards) can use expanders with st.metric as before
+
+                #         for market_name, odds_list in odds_by_market.items():
+                #             if market_name in table_markets:
+                #                 st.markdown(f"<div class='market-title'>{market_name}</div>", unsafe_allow_html=True)
+                                
+                #                 if not odds_list:
+                #                     st.caption("No odds for this market.")
+                #                     continue
+
+                #                 # Special handling for "Result & BTTS" due to its 2-row structure
+                #                 if market_name == "Result & BTTS":
+                #                     # Expecting 6 items in a specific order: H Y, A Y, D Y, H N, A N, D N
+                #                     if len(odds_list) == 6:
+                #                         # First row (Yes outcomes)
+                #                         cols_yes = st.columns(3)
+                #                         for i in range(3):
+                #                             with cols_yes[i]:
+                #                                 # Use display_label for the cell header
+                #                                 st.markdown(f"<div class='odds-table-cell-label'>{odds_list[i]['display_label']}</div>", unsafe_allow_html=True)
+                #                                 st.markdown(f"<div class='odds-table-cell-value'>{odds_list[i]['odds_value']:.2f if isinstance(odds_list[i]['odds_value'], (int, float)) else odds_list[i]['odds_value']}</div>", unsafe_allow_html=True)
+                #                         # Second row (No outcomes)
+                #                         cols_no = st.columns(3)
+                #                         for i in range(3):
+                #                             with cols_no[i]:
+                #                                 st.markdown(f"<div class='odds-table-cell-label'>{odds_list[i+3]['display_label']}</div>", unsafe_allow_html=True)
+                #                                 st.markdown(f"<div class='odds-table-cell-value'>{odds_list[i+3]['odds_value']:.2f if isinstance(odds_list[i+3]['odds_value'], (int, float)) else odds_list[i+3]['odds_value']}</div>", unsafe_allow_html=True)
+                #                     else:
+                #                         st.caption(f"Incorrect data format for {market_name}.")
+                #                 else:
+                #                     # For other table markets (1X2, DC, BTTS)
+                #                     num_outcomes = len(odds_list)
+                #                     cols_labels = st.columns(num_outcomes)
+                #                     cols_values = st.columns(num_outcomes)
+
+                #                     for i, odd_item in enumerate(odds_list):
+                #                         with cols_labels[i]:
+                #                             st.markdown(f"<div class='odds-table-cell-label'>{odd_item['display_label']}</div>", unsafe_allow_html=True)
+                #                         with cols_values[i]:
+                #                             st.markdown(f"<div class='odds-table-cell-value'>{odd_item['odds_value'] if isinstance(odd_item['odds_value'], (int, float)) else odd_item['odds_value']}</div>", unsafe_allow_html=True)
+                #                 st.write("") # Add a little vertical space
+                            
+                #             # For markets NOT in table_markets, use the expander + st.metric approach (from previous response)
+                #             elif "Over/Under" in market_name or "Over Under" in market_name or "Total -" in market_name: # Example condition
+                #                 with st.expander(f"{market_name}", expanded=False):
+                #                     num_items = len(odds_list)
+                #                     if num_items == 0: 
+                #                         st.caption("No odds."); continue
+                                    
+                #                     # Display O/U pairs side-by-side
+                #                     for i in range(0, num_items, 2):
+                #                         cols_ou = st.columns(2)
+                #                         with cols_ou[0]:
+                #                             st.metric(label=odds_list[i]['display_label'], value=f"{odds_list[i]['odds_value']:.2f}" if isinstance(odds_list[i]['odds_value'], (int, float)) else str(odds_list[i]['odds_value']))
+                #                         if i + 1 < num_items:
+                #                             with cols_ou[1]:
+                #                                 st.metric(label=odds_list[i+1]['display_label'], value=f"{odds_list[i+1]['odds_value']:.2f}" if isinstance(odds_list[i+1]['odds_value'], (int, float)) else str(odds_list[i+1]['odds_value']))
+                #                         else: # Odd number of O/U items (shouldn't happen if paired correctly)
+                #                             with cols_ou[1]: 
+                #                                 st.empty()
+
+
+                #             # Add more elif blocks here for other display styles if needed
+                #             # else: # Default for any other markets
+                #             #     with st.expander(f"{market_name} (Other)", expanded=False):
+                #             #         for odd_item in odds_list:
+                #             # st.text(f"{odd_item['display_label']}: {odd_item['odds_value']}")
+            # #4A5568        #384d67 #1e44d6
+            custom_css = """
+            <style>
+                .odds-table-cell-label {
+                    background-color: #20283e;
+                    color: white;
+                    padding: 1px;
+                    text-align: center;
+                    font-weight: bold;
+                    border: 1px solid #2D3748;
+                    min-height: 15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .odds-table-cell-value {
+                    background-color: #2C5282; /*#ac4e31#6ab190 #1da54b*/
+                    color: white;
+                    padding: 1px;
+                    text-align: center;
+                    border: 1px solid #2D3748;
+                    font-size: 0.9em;
+                    min-height: 15px;
+                    display: flex;
+                    align-items: center; justify-content: center;
+                }
+                .market-title-main { /* For titles inside the main expander */
+                    font-size: 0.9em; /* Slightly smaller than expander title */
+                    font-weight: bold;
+                    margin-top: 2px;
+                    margin-bottom: 4px;
+                    /* border-bottom: 1px solid #4A5568; */ /* Optional separator */
+                    /* padding-bottom: 4px; */
+                }
+                .odds-expander .stButton>button { /* Target buttons inside expanders if needed */
+                    /* Example: st.button("Bet Now", key=...) */
+                }
+                 .ou-header-label { /* Specific for O/U table headers "Line", "Over", "Under" */
+                    background-color: #20283e; 
+                    color: white; 
+                    padding: 4px; 
+                    text-align: center;
+                    font-weight: bold; 
+                    border: 1px solid #2D3748; 
+                    min-height: 15px;
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    font-size: 0.9em;
+                }
+                /*.ou-table-header div, .ou-table-row div {
+                    text-align: center;
+                    padding: 6px 4px; /* Reduced padding */
+                    font-size: 0.95em; /* Slightly smaller font */
+                    border-bottom: 1px solid #4A5568; /* Separator line for rows */
+                }
+                .ou-table-header div {
+                    font-weight: bold;
+                    background-color: #3a4556; /* Slightly different header bg */
+                    color: white;
+                }
+                .ou-table-row div:first-child { /* Line column */
+                    font-weight: bold;
+                }*/
+            </style>
+            """
+            st.markdown(custom_css, unsafe_allow_html=True) # UNCOMMENT TO APPLY CSS
+
+            
+            if not selected_match_data:
+                st.info("Select a match to view odds.")
+            else:
+                odds_by_market = group_odds_by_market(selected_match_data)
+
+                if not odds_by_market:
+                    st.info("No odds data available for this match.")
+                else:
+                    # Define markets that are suitable for the compact table display
+                    # These typically have 2 or 3 outcomes, or 6 for Result&BTTS
+                    compact_table_markets = [
+                        "Match Winner", "Double Chance", "Home/Away", 
+                        "Both Teams Score", "Result & BTTS",
+                        "First Half Winner", "Second Half Winner",
+                        "Both Teams Score - First Half", 
+                        "Draw No Bet (1st Half)", "Draw No Bet (2nd Half)",
+                        # Add any other markets that fit this 2/3 outcome per row style
+                    ]
+
+                    # --- Main Expander for Key Table Markets ---
+                    with st.expander("Key Betting Markets", expanded=True): # Start expanded
+                        has_content_in_main_expander = False
+                        for market_name in compact_table_markets: # Iterate in defined order if needed
+                            if market_name in odds_by_market:
+                                odds_list = odds_by_market[market_name]
+                                if not odds_list: continue
+                                
+                                has_content_in_main_expander = True
+                                st.markdown(f"<div class='market-title-main'>{market_name}</div>", unsafe_allow_html=True)
+
+                                if market_name == "Result & BTTS":
+                                    if len(odds_list) == 6: # Expecting 6 outcomes
+                                        cols_yes = st.columns(3)
+                                        for i in range(3):
+                                            with cols_yes[i]:
+                                                st.markdown(f"<div class='odds-table-cell-label'>{odds_list[i]['display_label']}</div>", unsafe_allow_html=True)
+                                                st.markdown(f"<div class='odds-table-cell-value'>{odds_list[i]['odds_value']:.2f if isinstance(odds_list[i]['odds_value'], (int, float)) else odds_list[i]['odds_value']}</div>", unsafe_allow_html=True)
+                                        cols_no = st.columns(3)
+                                        for i in range(3):
+                                            with cols_no[i]:
+                                                st.markdown(f"<div class='odds-table-cell-label'>{odds_list[i+3]['display_label']}</div>", unsafe_allow_html=True)
+                                                st.markdown(f"<div class='odds-table-cell-value'>{odds_list[i+3]['odds_value']:.2f if isinstance(odds_list[i+3]['odds_value'], (int, float)) else odds_list[i+3]['odds_value']}</div>", unsafe_allow_html=True)
+                                    else:
+                                        st.caption(f"Data format error for {market_name}.")
+                                else: # For other 2 or 3 outcome markets
+                                    num_outcomes = len(odds_list)
+                                    cols_labels = st.columns(num_outcomes)
+                                    cols_values = st.columns(num_outcomes)
+                                    for i, odd_item in enumerate(odds_list):
+                                        with cols_labels[i]:
+                                            st.markdown(f"<div class='odds-table-cell-label'>{odd_item['display_label']}</div>", unsafe_allow_html=True)
+                                        with cols_values[i]:
+                                            st.markdown(f"<div class='odds-table-cell-value'>{odd_item['odds_value'] if isinstance(odd_item['odds_value'], (int, float)) else odd_item['odds_value']}</div>", unsafe_allow_html=True)
+                                st.write("") # Small vertical space after each market table
+                        
+                        if not has_content_in_main_expander:
+                            st.caption("No key market odds available.")
+
+                    # --- Individual Expanders for Over/Under Markets ---
+                    # for market_name, odds_list in odds_by_market.items():
+                    #     if market_name not in compact_table_markets: # Process markets not handled above
+                    #         # This will catch all "Goals Over/Under", "Corners Over Under", "Cards Over/Under", "Total - Home/Away", etc.
+                    #         with st.expander(f"{market_name} Odds", expanded=False):
+                    #             if not odds_list:
+                    #                 st.caption("No odds for this market.")
+                    #                 continue
+                                
+                    #             # Display O/U pairs side-by-side using st.metric
+                    #             for i in range(0, len(odds_list), 2): # Step by 2 for pairs
+                    #                 cols_ou = st.columns(2)
+                    #                 with cols_ou[0]:
+                    #                     st.metric(label=odds_list[i]['display_label'], 
+                    #                                 value=f"{odds_list[i]['odds_value']:.2f}" if isinstance(odds_list[i]['odds_value'], (int, float)) else str(odds_list[i]['odds_value']))
+                    #                 if i + 1 < len(odds_list):
+                    #                     with cols_ou[1]:
+                    #                         st.metric(label=odds_list[i+1]['display_label'], 
+                    #                                     value=f"{odds_list[i+1]['odds_value']:.2f}" if isinstance(odds_list[i+1]['odds_value'], (int, float)) else str(odds_list[i+1]['odds_value']))
+                    #                 else: # Handle odd number of items if any (shouldn't happen for O/U)
+                    #                     with cols_ou[1]: st.empty()
+
+                    ou_market_categories = {
+                        "Goals": ["Goals Over/Under", "Total - Home", "Total - Away" ],
+                        "Corners": ["Corners Over Under" ],
+                        "Cards": ["Cards Over/Under"],
+                        "First Half": ["Goals Over/Under First Half", "Home Team Total Goals(1st Half)", "Away Team Total Goals(1st Half)","Total Corners (1st Half)"],
+                        "Second Half": ["Goals Over/Under Second Half","Home Team Total Goals(2nd Half)", "Away Team Total Goals(2nd Half)","Total Corners (2nd Half)"]
+                    }
+
+                    for category_title, markets_in_category in ou_market_categories.items():
+                        # Check if any market in this category has data to display
+                        category_has_any_data = any(m_key in odds_by_market and odds_by_market[m_key] for m_key in markets_in_category)
+
+                        if category_has_any_data:
+                            with st.expander(f"{category_title} Over/Under Lines", expanded=False):
+                                for market_name in markets_in_category:
+                                    if market_name in odds_by_market and odds_by_market[market_name]:
+                                        odds_list = odds_by_market[market_name]
+                                        
+                                        # Display market sub-title if it's not redundant with category
+                                        # e.g., if category is "Goals", and market is "Total - Home"
+                                        if category_title.lower() not in market_name.lower():
+                                            st.markdown(f"**{market_name.replace('Over/Under', '').replace('Over Under', '').strip()}**")
+                                        # else if only one market in category, no need for sub-title if same as category
+                                        elif len(markets_in_category) > 1:
+                                            st.markdown(f"**{market_name.replace('Over/Under', '').replace('Over Under', '').strip()}**")
+
+
+                                        # Table Header for O/U: Line | Over | Under
+                                        header_cols = st.columns([1, 1, 1]) 
+                                        with header_cols[0]:
+                                            st.markdown("<div class='ou-header-label'>Line</div>", unsafe_allow_html=True)
+                                        with header_cols[1]:
+                                            st.markdown("<div class='ou-header-label'>Over</div>", unsafe_allow_html=True)
+                                        with header_cols[2]:
+                                            st.markdown("<div class='ou-header-label'>Under</div>", unsafe_allow_html=True)
+
+                                        # Table Rows
+                                        for i in range(0, len(odds_list), 2): 
+                                            if i + 1 < len(odds_list):
+                                                over_item = odds_list[i]
+                                                under_item = odds_list[i+1]
+
+                                                line_match_over = re.search(r'(\d+(?:\.\d+)?)', over_item['bet_label'])
+                                                line_match_under = re.search(r'(\d+(?:\.\d+)?)', under_item['bet_label'])
+
+                                                if line_match_over and line_match_under and line_match_over.group(1) == line_match_under.group(1):
+                                                    line_display = line_match_over.group(1)
+                                                    row_cols = st.columns([1, 1, 1])
+                                                    with row_cols[0]:
+                                                        st.markdown(f"<div class='odds-table-cell-label'>{line_display}</div>", unsafe_allow_html=True)
+                                                    with row_cols[1]:
+                                                        over_odds_val = f"{over_item['odds_value']:.2f}" if isinstance(over_item['odds_value'], (int, float)) else str(over_item['odds_value'])
+                                                        st.markdown(f"<div class='odds-table-cell-value'>{over_odds_val}</div>", unsafe_allow_html=True)
+                                                    with row_cols[2]:
+                                                        under_odds_val = f"{under_item['odds_value']:.2f}" if isinstance(under_item['odds_value'], (int, float)) else str(under_item['odds_value'])
+                                                        st.markdown(f"<div class='odds-table-cell-value'>{under_odds_val}</div>", unsafe_allow_html=True)
+                                                else:
+                                                    st.caption(f"Data format/pairing issue: {over_item['bet_label']} / {under_item.get('bet_label', 'N/A')}")
+                                            else: 
+                                                st.caption(f"Orphaned O/U item: {odds_list[i]['bet_label']} - {odds_list[i]['odds_value']}")
+                                        st.markdown("<hr style='margin-top:10px; margin-bottom:10px;'>", unsafe_allow_html=True) # Separator after each specific O/U market table
+
+                    # Fallback for any markets not covered by compact_table_markets or ou_market_categories
+                    # You can add a default display here if needed, e.g., using st.metric inside an expander
+                    # st.markdown("---")
+                    # st.markdown("##### Other Markets")
+                    # for market_name, odds_list in odds_by_market.items():
+                    #     is_compact = market_name in compact_table_markets
+                    #     is_ou_category_market = any(market_name in cat_list for cat_list in ou_market_categories.values())
+                    #     if not is_compact and not is_ou_category_market:
+                    #         with st.expander(f"{market_name} (Other)", expanded=False):
+                    #             if not odds_list: st.caption("No odds."); continue
+                    #             for odd_item in odds_list:
+                    #                 st.metric(label=odd_item['display_label'], value=str(odd_item['odds_value']))
     # Performance Tab
     with tabs[1]:
         st.markdown("#### Performance & Form - Last 5 Games")
         # ... (Keep existing Performance tab code, ensuring .get() is used) ...
-        home_col1, away_col2 = st.columns(2)
+        home_perf_col1, away_perf_col2 = st.columns(2)
 
         home_btts_delta = Last5_HomeBothTeamsToScore - l5_league_avg_btts
         away_btts_delta = Last5_AwayBothTeamsToScore - l5_league_avg_btts
@@ -2372,7 +2964,7 @@ else:
         ppg_a = selected_match_data.get('ppg_a')
         ppg_a_all = selected_match_data.get('ppg_a_all')
 
-        with home_col1:
+        with home_perf_col1:
             st.markdown(f"**{selected_match_data.get('home_team','?')} (Home)**")
             form_home = colorize_performance(selected_match_data.get('form_home', '--'))#.split('//')r
             all_form_home = colorize_performance(selected_match_data.get('all_form_home', '--'))#.split('//')
@@ -2430,7 +3022,7 @@ else:
         
             # win_cols_h[1].metric("Total Reds",Last5HomeAvergeTotalRedCards,f"{round(l5hometotalreds_delta,2)} league avg.")
 
-        with away_col2:
+        with away_perf_col2:
             st.markdown(f"**{selected_match_data.get('away_team','?')} (Away)**")
             form_away = colorize_performance(selected_match_data.get('form_away', '--'))#.split('//')r
             all_form_away = colorize_performance(selected_match_data.get('all_form_away', '--'))#.split('//')
@@ -2484,9 +3076,9 @@ else:
 
     # Goals Tab
     # with tabs[2]:
-        g_stats_cols = st.columns(2)
+        goal_stats_cols = st.columns(2)
 
-        with g_stats_cols[0]:
+        with goal_stats_cols[0]:
             st.markdown("#### Goal Statistics")
             st.markdown("**Average Goals Scored vs Conceded per Game**")
             try:
@@ -2559,7 +3151,7 @@ else:
                 st.caption(f"Could not plot goal averages: {e}")
                 if isinstance(e, ImportError):
                     st.warning("Please install altair: pip install altair")
-        with g_stats_cols[1]:
+        with goal_stats_cols[1]:
             # --- NEW: Actual vs Expected Goals (xG) Visualization ---
             st.markdown("#### xG Statistics")
             st.markdown("**Average xG/xGA For and Aginst Per Game**")
@@ -2687,7 +3279,366 @@ else:
         st.markdown("---") # Separator
         
         
-        # st.markdown("---")
+        # Goals, Corners and Cards
+        # def create_and_display_corner_chart(team_name_full, for_spread_str, against_spread_str, num_recent_games=5):
+        #     if not for_spread_str or not against_spread_str:
+        #         st.markdown(f"**{team_name_full}**")
+        #         st.caption("Corner spread data N/A")
+        #         return
+
+        #     try:
+        #         for_values = [int(float(x)) for x in for_spread_str.split(',')]
+        #         against_values = [int(float(x)) for x in against_spread_str.split(',')]
+
+        #         # Take the specified number of recent games
+        #         for_values = for_values[:num_recent_games]
+        #         against_values = against_values[:num_recent_games]
+                
+        #         actual_num_games = min(len(for_values), len(against_values))
+        #         if actual_num_games == 0:
+        #             st.markdown(f"**{team_name_full}**")
+        #             st.caption("Insufficient corner spread data.")
+        #             return
+
+        #         # For st.line_chart, the index will be the x-axis.
+        #         # We want to show "Game 1" to "Game N" representing the sequence.
+        #         # If your data is "most recent first", G1 will be most recent.
+        #         game_labels = [f"G{i+1}" for i in range(actual_num_games)] 
+
+        #         df_corners = pd.DataFrame({
+        #             'For': for_values[:actual_num_games],
+        #             'Against': against_values[:actual_num_games]
+        #         }, index=game_labels) # Set game_labels as index
+
+        #         st.markdown(f"**{team_name_full}**")
+        #         st.line_chart(df_corners, height=200) # Adjust height as needed
+                
+        #         # Optionally, also display the raw numbers using st.code or st.caption
+        #         # st.caption(f"For: {for_spread_str}")
+        #         # st.caption(f"Against: {against_spread_str}")
+
+        #     except (ValueError, TypeError) as e:
+        #         st.markdown(f"**{team_name_full}**")
+        #         st.caption(f"Error processing corner data: {e}")
+        #         st.code(f"For: {for_spread_str}\nAgainst: {against_spread_str}", language=None)
+        #     except Exception as e_gen: # Catch any other general exceptions
+        #         st.markdown(f"**{team_name_full}**")
+        #         st.caption(f"An unexpected error occurred: {e_gen}")
+
+
+        #     except (ValueError, TypeError) as e:
+        #         st.markdown(f"**{team_name_full}**")
+        #         st.caption(f"Error processing corner data: {e}")
+        #         st.code(f"For: {for_spread_str}\nAgainst: {against_spread_str}", language=None)
+
+        # st.info(selected_match_data.get('l5_away_corners_for'))    
+        # st.info(selected_match_data.get('l5_away_corners_against'))    
+        
+
+        # create_and_display_corner_chart(
+        #     f"{away_team} (Away Games)",
+        #     selected_match_data.get('l5_away_corners_for'),
+        #     selected_match_data.get('l5_away_corners_against')
+        # )
+
+        def prepare_discipline_data(card_spread_str, foul_spread_str, num_recent_games=5):
+            # ... (same as before) ...
+            if not card_spread_str or not foul_spread_str:
+                return pd.DataFrame() 
+            try:
+                card_values = [int(x) for x in card_spread_str.split(',')]
+                foul_values = [int(x) for x in foul_spread_str.split(',')]
+                card_values = card_values[:num_recent_games]; foul_values = foul_values[:num_recent_games]
+                actual_num_games = min(len(card_values), len(foul_values))
+                if actual_num_games == 0: return pd.DataFrame()
+                game_labels = [f"G{i+1}" for i in range(actual_num_games)] 
+                df = pd.DataFrame({
+                    'Game': game_labels,
+                    'Cards Received by Team': card_values[:actual_num_games],
+                    'Fouls Committed by Team': foul_values[:actual_num_games]
+                })
+                return df
+            except (ValueError, TypeError):
+                return pd.DataFrame()
+
+        def create_layered_discipline_chart(
+            df_team_discipline: pd.DataFrame, 
+            referee_avg_total_cards_game: float, # The ref's average *total cards* in a game
+            chart_title: str,
+            card_color: str = 'darkorange', # More distinct than 'orange'
+            foul_color: str = 'steelblue',
+            ref_line_color: str = 'firebrick' # More distinct red
+        ):
+            if df_team_discipline.empty:
+                st.caption("Insufficient data for discipline chart.")
+                return
+
+            base = alt.Chart(df_team_discipline).encode(
+                x=alt.X('Game:N', sort=None, title=None, axis=alt.Axis(labelAngle=0, labelPadding=5))
+            )
+
+            bar_cards = base.mark_bar(size=18, opacity=0.8, color=card_color).encode(
+                y=alt.Y('Cards Received by Team:Q', title='Count', axis=alt.Axis(grid=True, tickMinStep=1)), # Ensure integer ticks
+                tooltip=[
+                    alt.Tooltip('Game:N'),
+                    alt.Tooltip('Cards Received by Team:Q', title='Team Cards')
+                ]
+            )
+
+            line_fouls = base.mark_line(point=alt.OverlayMarkDef(color=foul_color, size=50), strokeWidth=2.5, color=foul_color).encode(
+                y=alt.Y('Fouls Committed by Team:Q', axis=alt.Axis(tickMinStep=1)), # Uses the same y-axis
+                tooltip=[
+                    alt.Tooltip('Game:N'),
+                    alt.Tooltip('Fouls Committed by Team:Q', title='Team Fouls')
+                ]
+            )
+            
+            # Horizontal rule for Referee's Average Total Cards in their games
+            # Only add if the value is valid
+            layers = [bar_cards]#, line_fouls]
+            if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >= 0:
+                ref_avg_rule = alt.Chart(pd.DataFrame({'ref_avg_total': [referee_avg_total_cards_game]})).mark_rule(
+                    strokeDash=[6,4], strokeWidth=2, color=ref_line_color, opacity=0.9
+                ).encode(
+                    y='ref_avg_total:Q'
+                    # Tooltip for rule can be tricky, better to use caption
+                )
+                layers.append(ref_avg_rule)
+
+            # Determine Y-axis domain dynamically to include all data + ref line
+            max_cards = df_team_discipline['Cards Received by Team'].max() if not df_team_discipline.empty else 0
+            max_fouls = df_team_discipline['Fouls Committed by Team'].max() if not df_team_discipline.empty else 0
+            y_max = max(max_cards, max_fouls)
+            if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >=0:
+                y_max = max(max_cards, referee_avg_total_cards_game)#y_max
+            
+            y_domain = [0, y_max + 2] # Add some padding
+
+            layered_chart = alt.layer(*layers).resolve_scale(
+                y='shared' 
+            ).encode(
+            alt.Y(scale=alt.Scale(domain=y_domain)) # Apply the dynamic domain
+            ).properties(
+                title=alt.TitleParams(text=chart_title, anchor='middle', fontSize=13),
+                height=275,
+            ).configure_axis(
+                labelFontSize=10,
+                titleFontSize=11
+            ).configure_legend( # To create a custom legend for the lines/bars if needed
+                title=None,
+                orient='top',
+                padding=10,
+                labelFontSize=10,
+                symbolStrokeWidth=2
+            )
+            
+            st.altair_chart(layered_chart, use_container_width=True)
+            if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >=0:
+                st.caption(f"<span style='color:{ref_line_color}; font-weight:bold;'>⎯⎯</span> Referee Avg. Total Cards / Game: **{referee_avg_total_cards_game:.1f}**", unsafe_allow_html=True)
+
+        # def prepare_expected_cards_data(
+        #     card_spread_str, 
+        #     foul_spread_str, 
+        #     ref_cards_per_foul_for_this_team_context: float, # e.g., RefLast5CardsPerFoulHome
+        #     num_recent_games=5
+        # ):
+        #     if not card_spread_str or not foul_spread_str or pd.isna(ref_cards_per_foul_for_this_team_context):
+        #         return pd.DataFrame()
+
+        #     try:
+        #         card_values = [int(x) for x in card_spread_str.split(',')]
+        #         foul_values = [int(x) for x in foul_spread_str.split(',')]
+
+        #         card_values = card_values[:num_recent_games]
+        #         foul_values = foul_values[:num_recent_games]
+                
+        #         actual_num_games = min(len(card_values), len(foul_values))
+        #         if actual_num_games == 0: return pd.DataFrame()
+
+        #         game_labels = [f"G{i+1}" for i in range(actual_num_games)]
+                
+        #         expected_card_values = [
+        #             round(foul * ref_cards_per_foul_for_this_team_context) # Round to nearest whole card
+        #             for foul in foul_values[:actual_num_games]
+        #         ]
+
+        #         df = pd.DataFrame({
+        #             'Game': game_labels,
+        #             'Actual Cards Received': card_values[:actual_num_games],
+        #             'Expected Cards (based on Fouls & Ref C/F)': expected_card_values
+        #         })
+        #         return df
+        #     except (ValueError, TypeError):
+        #         return pd.DataFrame()
+
+        # def create_actual_vs_expected_cards_chart(
+        #     df_discipline_data: pd.DataFrame, 
+        #     referee_avg_total_cards_game: float, 
+        #     chart_title: str,
+        #     actual_card_color: str = 'darkorange',
+        #     expected_card_color: str = 'skyblue', # Different color for the line
+        #     ref_line_color: str = 'firebrick'
+        # ):
+        #     if df_discipline_data.empty:
+        #         st.caption("Insufficient data for discipline chart.")
+        #         return
+
+        #     base = alt.Chart(df_discipline_data).encode(
+        #         x=alt.X('Game:N', sort=None, title=None, axis=alt.Axis(labelAngle=0, labelPadding=5))
+        #     )
+
+        #     bar_actual_cards = base.mark_bar(size=18, opacity=0.8, color=actual_card_color).encode(
+        #         y=alt.Y('Actual Cards Received:Q', title='Cards', axis=alt.Axis(grid=True, tickMinStep=1)),
+        #         tooltip=[alt.Tooltip('Game:N'), alt.Tooltip('Actual Cards Received:Q', title='Actual Cards')]
+        #     )
+
+        #     line_expected_cards = base.mark_line(point=alt.OverlayMarkDef(color=expected_card_color, size=50), strokeWidth=2.5, color=expected_card_color).encode(
+        #         y=alt.Y('Expected Cards (based on Fouls & Ref C/F):Q', axis=alt.Axis(tickMinStep=1)), # Shared Y-axis
+        #         tooltip=[alt.Tooltip('Game:N'), alt.Tooltip('Expected Cards (based on Fouls & Ref C/F):Q', title='Expected Cards')]
+        #     )
+            
+        #     layers = [bar_actual_cards, line_expected_cards]
+        #     if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >= 0:
+        #         ref_avg_rule = alt.Chart(pd.DataFrame({'ref_avg_total': [referee_avg_total_cards_game]})).mark_rule(
+        #             strokeDash=[6,4], strokeWidth=2, color=ref_line_color, opacity=0.9
+        #         ).encode(y='ref_avg_total:Q')
+        #         layers.append(ref_avg_rule)
+
+        #     max_actual = df_discipline_data['Actual Cards Received'].max() if 'Actual Cards Received' in df_discipline_data else 0
+        #     max_expected = df_discipline_data['Expected Cards (based on Fouls & Ref C/F)'].max() if 'Expected Cards (based on Fouls & Ref C/F)' in df_discipline_data else 0
+        #     y_max = max(max_actual, max_expected)
+        #     if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >=0:
+        #         y_max = max(y_max, referee_avg_total_cards_game)
+        #     y_domain = [0, y_max + 1.5] # Adjust padding
+
+        #     layered_chart = alt.layer(*layers).resolve_scale(
+        #         y='shared' 
+        #     ).encode(
+        #     alt.Y(scale=alt.Scale(domain=y_domain,nice=False), axis=alt.Axis(tickMinStep=1)) 
+        #     ).properties(
+        #         title=alt.TitleParams(text=chart_title, anchor='middle', fontSize=13),
+        #         height=275,
+        #     ).configure_axis(labelFontSize=10, titleFontSize=11)
+            
+        #     st.altair_chart(layered_chart, use_container_width=True)
+        #     if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >=0:
+        #         st.caption(f"<span style='color:{ref_line_color}; font-weight:bold;'>⎯⎯</span> Referee Avg. Total Cards / Game: **{referee_avg_total_cards_game:.1f}**", unsafe_allow_html=True)
+
+        # --- Example Usage in Streamlit ---
+        
+        st.markdown("#### Team Discipline vs. Referee Tendencies")
+
+        referee_name_for_title = selected_match_data.get("Referee", 'The Referee') #"RefereeFullName"
+
+        ref_avg_total_cards = selected_match_data.get('RefLast5AvgTotalCards')
+
+        col_home_disc, col_away_disc = st.columns(2)
+        # 'RefSeasonAvgTotalCards','RefSeasonAvgHomeTeamCards','RefSeasonAvgAwayTeamCards',
+        # 'RefLast5AvgTotalCards','RefLast5AvgHomeTeamCards','RefLast5AvgAwayTeamCards',
+        # 'RefLast5HomeTeamCards','RefLast5AwayTeamCards',
+
+        # HOME TEAM DISCIPLINE SECTION
+        with col_home_disc:
+            st.markdown(f"##### {home_team} (Last 5 Home Games)")
+            
+            # Key Metrics Display
+            home_team_fouls_spread_l5 = selected_match_data.get('l5_home_fouls_for', "0")
+            home_team_cards_spread_l5 = selected_match_data.get('l5_home_cards_for', "0")
+            home_team_avg_fouls_l5 = np.mean([int(x) for x in selected_match_data.get('l5_home_fouls_for', "0").split(',') if x]) if selected_match_data.get('l5_home_fouls_for') else np.nan
+            home_team_avg_cards_l5 = np.mean([int(x) for x in selected_match_data.get('l5_home_cards_for', "0").split(',') if x]) if selected_match_data.get('l5_home_cards_for') else np.nan
+            
+            ref_cards_per_foul_home_l5 = selected_match_data.get('RefLast5CardsPerFoulHome') # Specific to ref for this team at home
+            ref_strictness_label_home_l5 = selected_match_data.get('RefLast5HomeLabel') # Ref's strictness for this team at home
+            
+            ref_home_average_l5 = selected_match_data.get('RefLast5AvgHomeTeamCards')
+
+            if pd.notna(home_team_avg_fouls_l5):
+                st.markdown(f"- Avg. Fouls Committed: **{home_team_avg_fouls_l5:.1f}**")
+            if pd.notna(home_team_avg_cards_l5):
+                st.markdown(f"- Avg. Cards Received: **{home_team_avg_cards_l5:.1f}**")
+            # if ref_avg_total_cards:
+            #     st.markdown(f"- {referee_name_for_title}'s Cards/Game (Overall avg, L5): **{ref_avg_total_cards}**")
+            # if ref_home_average_l5:
+            #     st.markdown(f"- {referee_name_for_title}'s Cards/Game (vs Home, L5): **{ref_home_average_l5}**")
+            if pd.notna(ref_cards_per_foul_home_l5):
+                st.markdown(f"- {referee_name_for_title}'s Cards/Foul (vs Home, L5): **{ref_cards_per_foul_home_l5/100:.2f}**")
+            if ref_strictness_label_home_l5:
+                 st.markdown(f"- {referee_name_for_title}'s Strictness (vs Home, L5): **{ref_strictness_label_home_l5}**")
+            
+            # Chart
+            df_home_disc_data = prepare_discipline_data(
+                selected_match_data.get('l5_home_cards_for'),
+                selected_match_data.get('l5_home_fouls_for')
+            )
+            # Assuming you have a field for referee's average total cards in their games
+            # ref_avg_total_cards = selected_match_data.get('RefSeasonTotalCardsAvg') # Or RefLast5TotalCardsAvg
+            
+            create_layered_discipline_chart(
+                df_team_discipline=df_home_disc_data,
+                referee_avg_total_cards_game=ref_avg_total_cards, # This is total cards by ref in a game
+                chart_title=f"{home_team} Discipline"
+            )
+            
+            # df_home_exp_data = prepare_expected_cards_data( home_team_cards_spread_l5,home_team_fouls_spread_l5, ref_cards_per_foul_home_l5)
+
+            # create_actual_vs_expected_cards_chart(
+            #     df_discipline_data=df_home_exp_data,
+            #     referee_avg_total_cards_game=ref_avg_total_cards,
+            #     chart_title=f"{home_team} Actual vs. Expected Cards"
+            # )
+            st.caption(f"Bars: Cards Received by {home_team}. Line: Fouls Committed by {home_team}.")
+
+
+        # AWAY TEAM DISCIPLINE SECTION (similar structure)
+        with col_away_disc:
+            st.markdown(f"##### {away_team} (Last 5 Away Games)")
+            
+            away_team_fouls_spread_l5 = selected_match_data.get('l5_away_fouls_for', "0")
+            away_team_cards_spread_l5 = selected_match_data.get('l5_away_cards_for', "0")
+            away_team_avg_fouls_l5 = np.mean([int(x) for x in selected_match_data.get('l5_away_fouls_for', "0").split(',') if x]) if selected_match_data.get('l5_away_fouls_for') else np.nan
+            away_team_avg_cards_l5 = np.mean([int(x) for x in selected_match_data.get('l5_away_cards_for', "0").split(',') if x]) if selected_match_data.get('l5_away_cards_for') else np.nan
+            ref_cards_per_foul_away_l5 = selected_match_data.get('RefLast5CardsPerFoulAway')
+            ref_strictness_label_away_l5 = selected_match_data.get('RefLast5AwayLabel')
+            ref_away_average_l5 = selected_match_data.get('RefLast5AvgAwayTeamCards')
+
+            if pd.notna(away_team_avg_fouls_l5):
+                st.markdown(f"- Avg. Fouls Committed: **{away_team_avg_fouls_l5:.1f}**")
+            if pd.notna(away_team_avg_cards_l5):
+                st.markdown(f"- Avg. Cards Received: **{away_team_avg_cards_l5:.1f}**")
+            # if ref_avg_total_cards:
+            #     st.markdown(f"- {referee_name_for_title}'s Cards/Game (Overall avg, L5): **{ref_avg_total_cards}**")
+            # if ref_away_average_l5:
+            #     st.markdown(f"- {referee_name_for_title}'s Cards/Game (vs Away, L5): **{ref_away_average_l5}**")
+            if pd.notna(ref_cards_per_foul_away_l5):
+                st.markdown(f"- {referee_name_for_title}'s Cards/Foul (vs Away, L5): **{ref_cards_per_foul_away_l5/100:.2f}**")
+            if ref_strictness_label_away_l5:
+                 st.markdown(f"- {referee_name_for_title}'s Strictness (vs Away, L5): **{ref_strictness_label_away_l5}**")
+
+            # Chart
+            df_away_disc_data = prepare_discipline_data(
+                selected_match_data.get('l5_away_cards_for'),
+                selected_match_data.get('l5_away_fouls_for')
+            )
+            # ref_avg_total_cards is the same for the match
+            
+            create_layered_discipline_chart(
+                df_team_discipline=df_away_disc_data,
+                referee_avg_total_cards_game=ref_avg_total_cards,
+                chart_title=f"{away_team} Discipline"
+            )
+
+            # df_away_exp_data = prepare_expected_cards_data(away_team_cards_spread_l5,away_team_fouls_spread_l5,  ref_cards_per_foul_away_l5)
+
+            # create_actual_vs_expected_cards_chart(
+            #     df_discipline_data=df_away_exp_data,
+            #     referee_avg_total_cards_game=ref_avg_total_cards,
+            #     chart_title=f"{home_team} Actual vs. Expected Cards"
+            # )
+            
+            st.caption(f"Bars: Cards Received by {away_team}. Line: Fouls Committed by {away_team}.")
+
+        st.markdown("---") # Main section divider
+
         stats_cols = st.columns(4)
         with stats_cols[0]:
             st.markdown("#### Goal Trends")
@@ -2787,6 +3738,7 @@ else:
             st.markdown("---")
 
             st.markdown("**Cards (O/U)**")
+            # st.metric(label="Referee Home Avg.", value=ref_l5_home_avg, )
             st.markdown("**Over 1.5 Cards:**")
             st.markdown(create_colored_progress_bar(Last5HomeOver1YellowCards, text_label="O1.5"), unsafe_allow_html=True)
             st.markdown("**Over 2.5 Cards:**")
@@ -2821,7 +3773,6 @@ else:
             st.markdown(create_colored_progress_bar(Last5AwayOver3YellowCards, text_label="O3.5"), unsafe_allow_html=True)
             st.markdown("**Over 4.5 Cards:**")
             st.markdown(create_colored_progress_bar(Last5AwayOver4YellowCards, text_label="O4.5"), unsafe_allow_html=True)
-
 
     # H2H Tab
     def display_h2h_stats(metric_label, h2h_val,team_overall_avg,league_avg_context,team,inverse_flag):
@@ -3104,3 +4055,50 @@ else:
                     st.markdown(f"**{insight['label']}:** {insight['value']}")
                 else: 
                     st.caption(f"{insight['label']} (No data)")
+
+    # with tabs[4]:
+        # st.markdown(f"### 🎲 Odds for {selected_match_data.get('HomeTeam', '')} vs {selected_match_data.get('AwayTeam', '')}")
+
+        # if not selected_match_data:
+        #     st.info("Select a match to view odds.")
+        # else:
+        #     # Group the odds from selected_match_data
+        #     odds_by_market = group_odds_by_market(selected_match_data)
+
+        #     if not odds_by_market:
+        #         st.info("No odds data available for this match.")
+        #     else:
+        #         for market_name, odds_list in odds_by_market.items():
+        #             with st.expander(f"{market_name}", expanded=False): # Start collapsed
+        #                 # Determine number of columns based on odds_list length for that market
+        #                 # Max 3 columns for readability, or fewer if fewer items
+        #                 num_items = len(odds_list)
+        #                 if num_items == 0:
+        #                     st.caption("No odds for this market.")
+        #                     continue
+                        
+        #                 cols = st.columns(min(num_items, 3)) 
+        #                 col_idx = 0
+        #                 for odd_item in odds_list:
+        #                     with cols[col_idx % len(cols)]:
+        #                         bet_label = odd_item['bet_label']
+        #                         odds_val = odd_item['odds_value']
+                                
+        #                         # For Over/Under, try to make label more concise if it's long
+        #                         if "Over/Under" in market_name or "Over Under" in market_name:
+        #                             # 'bet_label' is already 'Over X.X' or 'Under X.X'
+        #                             display_label = bet_label 
+        #                         elif market_name == "Total - Home" or market_name == "Total - Away":
+        #                             display_label = bet_label # e.g. "Over 0.5"
+        #                         else:
+        #                             display_label = bet_label
+
+        #                         # Display using st.metric or st.text_input (as placeholder)
+        #                         if isinstance(odds_val, (int, float)):
+        #                             st.metric(label=display_label, value=f"{odds_val:.2f}")
+        #                         else: # For "N/A" or other non-numeric
+        #                             st.metric(label=display_label, value=str(odds_val)) 
+                                
+        #                         # If you want to use text_input as a placeholder for future editing:
+        #                         # st.text_input(label=display_label, value=str(odds_val), key=odd_item['original_field'], disabled=True)
+        #                     col_idx += 1
