@@ -942,26 +942,6 @@ def reset_all_filters():
     # This requires storing the key/value of the latest week option
     # if 'latest_week_key' in st.session_state:
     #     st.session_state.week_selector_key = st.session_state.latest_week_key
-# def reset_all_filters():
-#     """
-#     Reset all filters to default values (e.g., "All") and clear selected match.
-#     - Determine the default date (latest available)
-#     - Recalculate valid dates here or pass the default date value if needed
-#     - This logic assumes raw_dates_sorted is available or recalculated easily
-#     - Let's assume we stored the default date value in session state earlier or can calculate it
-#     """
-#     # if 'default_date_value' in st.session_state:
-#     #     st.session_state.date_filter = st.session_state.default_date_value
-#     # Reset other filters to "All"
-#     st.session_state.day_filter = "All Dates"
-#     st.session_state.country_filter = "All"
-#     st.session_state.league_filter = "All"
-#     st.session_state.rec_bet_filter = ["All"] # Note: Multiselect needs a list
-#     st.session_state.value_bet_filter = ["All"] # Note: Multiselect needs a list
-#     st.session_state.include_no_score = True # Reset checkbox to default state
-#     st.session_state.confidence_filter = st.session_state.get('default_confidence_range', (0, 10))
-#     # Clear selected match if any
-#     clear_selected_match()
 
 def add_transient_message(msg_type, text):
     """Adds a message with type and timestamp to the session state list."""
@@ -977,11 +957,7 @@ def add_transient_message(msg_type, text):
 # This is a simplified version, adjust based on your exact prediction strings
 # --- NEW Helper function to check ALL prediction types ---
 
-def check_prediction_success(prediction_str,
-                             home_goals, away_goals,
-                             total_corners,
-                             total_yellow_cards,
-                             home_team_name, away_team_name):
+def check_prediction_success(prediction_str, home_goals, away_goals, total_corners, total_yellow_cards, home_team_name, away_team_name):
     if not prediction_str or not isinstance(prediction_str, str) or prediction_str.strip() == '--':
         return "PENDING"
 
@@ -989,7 +965,7 @@ def check_prediction_success(prediction_str,
 
     # --- Data Validity ---
     scores_valid = isinstance(home_goals, (int, float)) and not math.isnan(home_goals) and \
-                   isinstance(away_goals, (int, float)) and not math.isnan(away_goals)
+                    isinstance(away_goals, (int, float)) and not math.isnan(away_goals)
     corners_valid = isinstance(total_corners, (int, float)) and not math.isnan(total_corners)
     yellow_cards_valid = isinstance(total_yellow_cards, (int, float)) and not math.isnan(total_yellow_cards)
 
@@ -1022,7 +998,7 @@ def check_prediction_success(prediction_str,
 
     # --- 3. BTTS (Both Teams To Score) ---
     is_btts_yes_pred = re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*(yes)?\b|\bgg\b', pred_lower) and \
-                       not re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*no\b|\bng\b', pred_lower)
+                        not re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*no\b|\bng\b', pred_lower)
     is_btts_no_pred = re.search(r'\b(btts|both\s*teams\s*to\s*score)\s*no\b|\bng\b', pred_lower)
     if is_btts_yes_pred:
         if not scores_valid: return "PENDING"
@@ -1109,14 +1085,14 @@ def check_prediction_success(prediction_str,
     for temp_part_pred in temp_potential_preds:
         # Check for keywords that strongly indicate an outcome market
         if re.search(r'\b(double\s*chance|dc)\b', temp_part_pred) or \
-           re.fullmatch(r'([hax12])([x12])?', temp_part_pred) or \
-           re.fullmatch(r'([hax])\s*\(.+\)', temp_part_pred) or \
-           any(kw in temp_part_pred for kw in ['home or draw', 'away or draw', 'home or away',
-                                               'draw or home', 'draw or away', 'away or home',
-                                               'home win', 'away win']) or \
-           temp_part_pred in ['home', 'draw', 'away', '1', '2', 'x'] or \
-           (home_team_lower and temp_part_pred == home_team_lower) or \
-           (away_team_lower and temp_part_pred == away_team_lower):
+            re.fullmatch(r'([hax12])([x12])?', temp_part_pred) or \
+            re.fullmatch(r'([hax])\s*\(.+\)', temp_part_pred) or \
+            any(kw in temp_part_pred for kw in ['home or draw', 'away or draw', 'home or away',
+                                                'draw or home', 'draw or away', 'away or home',
+                                                'home win', 'away win']) or \
+            temp_part_pred in ['home', 'draw', 'away', '1', '2', 'x'] or \
+            (home_team_lower and temp_part_pred == home_team_lower) or \
+            (away_team_lower and temp_part_pred == away_team_lower):
             is_prediction_format_outcome_market = True
             break
 
@@ -1135,8 +1111,8 @@ def check_prediction_success(prediction_str,
         if hax_match:
             bet_char = hax_match.group(1)
             if (bet_char == 'h' and actual_home_win) or \
-               (bet_char == 'x' and actual_draw) or \
-               (bet_char == 'a' and actual_away_win):
+                (bet_char == 'x' and actual_draw) or \
+                (bet_char == 'a' and actual_away_win):
                 return "WIN"
             # If it's a single HAX prediction and it didn't win, it's a loss.
             # If part of a combo, we continue to check other parts.
@@ -1148,8 +1124,8 @@ def check_prediction_success(prediction_str,
         if dc_explicit_match:
             dc_symbols = "".join(sorted(dc_explicit_match.group(1))) # e.g. "x1" -> "1x"
             if (dc_symbols == "1x" and (actual_home_win or actual_draw)) or \
-               (dc_symbols == "2x" and (actual_away_win or actual_draw)) or \
-               (dc_symbols == "12" and (actual_home_win or actual_away_win)):
+                (dc_symbols == "2x" and (actual_away_win or actual_draw)) or \
+                (dc_symbols == "12" and (actual_home_win or actual_away_win)):
                 return "WIN"
             return "LOSS" # If explicitly "double chance X" and it lost
 
@@ -1158,8 +1134,8 @@ def check_prediction_success(prediction_str,
         if len(part_pred_dc) == 2 and all(c in '12x' for c in part_pred_dc) and ('x' in part_pred_dc or (part_pred_dc[0].isdigit() and part_pred_dc[1].isdigit())):
             dc_symbols = "".join(sorted(part_pred_dc))
             if (dc_symbols == "1x" and (actual_home_win or actual_draw)) or \
-               (dc_symbols == "2x" and (actual_away_win or actual_draw)) or \
-               (dc_symbols == "12" and (actual_home_win or actual_away_win)):
+                (dc_symbols == "2x" and (actual_away_win or actual_draw)) or \
+                (dc_symbols == "12" and (actual_home_win or actual_away_win)):
                 return "WIN"
             # If it was a 2-char DC symbol and didn't win, it's a loss
             # (unless part of a larger comma-separated string not yet fully evaluated)
@@ -1169,34 +1145,34 @@ def check_prediction_success(prediction_str,
         # D. Textual Double Chance ("Home or Draw", "Team A or Draw")
         # Home or Draw
         if (re.search(r'\bhome\b', part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)) or \
-           (home_team_lower and re.search(re.escape(home_team_lower), part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)):
+            (home_team_lower and re.search(re.escape(home_team_lower), part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)):
             return "WIN" if actual_home_win or actual_draw else "LOSS"
         # Away or Draw
         if (re.search(r'\baway\b', part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)) or \
-           (away_team_lower and re.search(re.escape(away_team_lower), part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)):
+            (away_team_lower and re.search(re.escape(away_team_lower), part_pred_dc) and re.search(r'\bor\s+draw\b', part_pred_dc)):
             return "WIN" if actual_away_win or actual_draw else "LOSS"
         # Home or Away (No Draw)
         if (re.search(r'\bhome\b', part_pred_dc) and re.search(r'\bor\s+away\b', part_pred_dc)) or \
-           (home_team_lower and re.search(re.escape(home_team_lower), part_pred_dc) and \
+            (home_team_lower and re.search(re.escape(home_team_lower), part_pred_dc) and \
             (re.search(r'\bor\s+away\b', part_pred_dc) or (away_team_lower and re.search(r'\bor\s+' + re.escape(away_team_lower), part_pred_dc)))) or \
-           (away_team_lower and re.search(re.escape(away_team_lower), part_pred_dc) and \
+            (away_team_lower and re.search(re.escape(away_team_lower), part_pred_dc) and \
             (re.search(r'\bor\s+home\b', part_pred_dc) or (home_team_lower and re.search(r'\bor\s+' + re.escape(home_team_lower), part_pred_dc)))):
             return "WIN" if actual_home_win or actual_away_win else "LOSS"
 
         # E. Single WDL Keywords/Numbers/Team Names
         # Using re.fullmatch for exact matches of these terms
         if (re.fullmatch(r'home\s*win', part_pred_dc) and actual_home_win) or \
-           (re.fullmatch(r'home', part_pred_dc) and actual_home_win) or \
-           (re.fullmatch(r'1', part_pred_dc) and actual_home_win):
+            (re.fullmatch(r'home', part_pred_dc) and actual_home_win) or \
+            (re.fullmatch(r'1', part_pred_dc) and actual_home_win):
             return "WIN"
         
         if (re.fullmatch(r'away\s*win', part_pred_dc) and actual_away_win) or \
-           (re.fullmatch(r'away', part_pred_dc) and actual_away_win) or \
-           (re.fullmatch(r'2', part_pred_dc) and actual_away_win):
+            (re.fullmatch(r'away', part_pred_dc) and actual_away_win) or \
+            (re.fullmatch(r'2', part_pred_dc) and actual_away_win):
             return "WIN"
 
         if (re.fullmatch(r'draw', part_pred_dc) and actual_draw) or \
-           (re.fullmatch(r'x', part_pred_dc) and actual_draw):
+            (re.fullmatch(r'x', part_pred_dc) and actual_draw):
             return "WIN"
 
         if home_team_lower and re.fullmatch(home_team_lower, part_pred_dc) and actual_home_win:
@@ -2362,7 +2338,7 @@ else:
     with tabs[1]:
         st.markdown("#### Performance & Form - Last 5 Games")
         # ... (Keep existing Performance tab code, ensuring .get() is used) ...
-        home_col1, away_col2 = st.columns(2)
+        home_perf_col1, away_perf_col2 = st.columns(2)
 
         home_btts_delta = Last5_HomeBothTeamsToScore - l5_league_avg_btts
         away_btts_delta = Last5_AwayBothTeamsToScore - l5_league_avg_btts
@@ -2372,7 +2348,7 @@ else:
         ppg_a = selected_match_data.get('ppg_a')
         ppg_a_all = selected_match_data.get('ppg_a_all')
 
-        with home_col1:
+        with home_perf_col1:
             st.markdown(f"**{selected_match_data.get('home_team','?')} (Home)**")
             form_home = colorize_performance(selected_match_data.get('form_home', '--'))#.split('//')r
             all_form_home = colorize_performance(selected_match_data.get('all_form_home', '--'))#.split('//')
@@ -2430,7 +2406,7 @@ else:
         
             # win_cols_h[1].metric("Total Reds",Last5HomeAvergeTotalRedCards,f"{round(l5hometotalreds_delta,2)} league avg.")
 
-        with away_col2:
+        with away_perf_col2:
             st.markdown(f"**{selected_match_data.get('away_team','?')} (Away)**")
             form_away = colorize_performance(selected_match_data.get('form_away', '--'))#.split('//')r
             all_form_away = colorize_performance(selected_match_data.get('all_form_away', '--'))#.split('//')
@@ -2484,9 +2460,9 @@ else:
 
     # Goals Tab
     # with tabs[2]:
-        g_stats_cols = st.columns(2)
+        goal_stats_cols = st.columns(2)
 
-        with g_stats_cols[0]:
+        with goal_stats_cols[0]:
             st.markdown("#### Goal Statistics")
             st.markdown("**Average Goals Scored vs Conceded per Game**")
             try:
@@ -2559,7 +2535,7 @@ else:
                 st.caption(f"Could not plot goal averages: {e}")
                 if isinstance(e, ImportError):
                     st.warning("Please install altair: pip install altair")
-        with g_stats_cols[1]:
+        with goal_stats_cols[1]:
             # --- NEW: Actual vs Expected Goals (xG) Visualization ---
             st.markdown("#### xG Statistics")
             st.markdown("**Average xG/xGA For and Aginst Per Game**")
@@ -2687,7 +2663,366 @@ else:
         st.markdown("---") # Separator
         
         
-        # st.markdown("---")
+        # Goals, Corners and Cards
+        # def create_and_display_corner_chart(team_name_full, for_spread_str, against_spread_str, num_recent_games=5):
+        #     if not for_spread_str or not against_spread_str:
+        #         st.markdown(f"**{team_name_full}**")
+        #         st.caption("Corner spread data N/A")
+        #         return
+
+        #     try:
+        #         for_values = [int(float(x)) for x in for_spread_str.split(',')]
+        #         against_values = [int(float(x)) for x in against_spread_str.split(',')]
+
+        #         # Take the specified number of recent games
+        #         for_values = for_values[:num_recent_games]
+        #         against_values = against_values[:num_recent_games]
+                
+        #         actual_num_games = min(len(for_values), len(against_values))
+        #         if actual_num_games == 0:
+        #             st.markdown(f"**{team_name_full}**")
+        #             st.caption("Insufficient corner spread data.")
+        #             return
+
+        #         # For st.line_chart, the index will be the x-axis.
+        #         # We want to show "Game 1" to "Game N" representing the sequence.
+        #         # If your data is "most recent first", G1 will be most recent.
+        #         game_labels = [f"G{i+1}" for i in range(actual_num_games)] 
+
+        #         df_corners = pd.DataFrame({
+        #             'For': for_values[:actual_num_games],
+        #             'Against': against_values[:actual_num_games]
+        #         }, index=game_labels) # Set game_labels as index
+
+        #         st.markdown(f"**{team_name_full}**")
+        #         st.line_chart(df_corners, height=200) # Adjust height as needed
+                
+        #         # Optionally, also display the raw numbers using st.code or st.caption
+        #         # st.caption(f"For: {for_spread_str}")
+        #         # st.caption(f"Against: {against_spread_str}")
+
+        #     except (ValueError, TypeError) as e:
+        #         st.markdown(f"**{team_name_full}**")
+        #         st.caption(f"Error processing corner data: {e}")
+        #         st.code(f"For: {for_spread_str}\nAgainst: {against_spread_str}", language=None)
+        #     except Exception as e_gen: # Catch any other general exceptions
+        #         st.markdown(f"**{team_name_full}**")
+        #         st.caption(f"An unexpected error occurred: {e_gen}")
+
+
+        #     except (ValueError, TypeError) as e:
+        #         st.markdown(f"**{team_name_full}**")
+        #         st.caption(f"Error processing corner data: {e}")
+        #         st.code(f"For: {for_spread_str}\nAgainst: {against_spread_str}", language=None)
+
+        # st.info(selected_match_data.get('l5_away_corners_for'))    
+        # st.info(selected_match_data.get('l5_away_corners_against'))    
+        
+
+        # create_and_display_corner_chart(
+        #     f"{away_team} (Away Games)",
+        #     selected_match_data.get('l5_away_corners_for'),
+        #     selected_match_data.get('l5_away_corners_against')
+        # )
+
+        def prepare_discipline_data(card_spread_str, foul_spread_str, num_recent_games=5):
+            # ... (same as before) ...
+            if not card_spread_str or not foul_spread_str:
+                return pd.DataFrame() 
+            try:
+                card_values = [int(x) for x in card_spread_str.split(',')]
+                foul_values = [int(x) for x in foul_spread_str.split(',')]
+                card_values = card_values[:num_recent_games]; foul_values = foul_values[:num_recent_games]
+                actual_num_games = min(len(card_values), len(foul_values))
+                if actual_num_games == 0: return pd.DataFrame()
+                game_labels = [f"G{i+1}" for i in range(actual_num_games)] 
+                df = pd.DataFrame({
+                    'Game': game_labels,
+                    'Cards Received by Team': card_values[:actual_num_games],
+                    'Fouls Committed by Team': foul_values[:actual_num_games]
+                })
+                return df
+            except (ValueError, TypeError):
+                return pd.DataFrame()
+
+        def create_layered_discipline_chart(
+            df_team_discipline: pd.DataFrame, 
+            referee_avg_total_cards_game: float, # The ref's average *total cards* in a game
+            chart_title: str,
+            card_color: str = 'darkorange', # More distinct than 'orange'
+            foul_color: str = 'steelblue',
+            ref_line_color: str = 'firebrick' # More distinct red
+        ):
+            if df_team_discipline.empty:
+                st.caption("Insufficient data for discipline chart.")
+                return
+
+            base = alt.Chart(df_team_discipline).encode(
+                x=alt.X('Game:N', sort=None, title=None, axis=alt.Axis(labelAngle=0, labelPadding=5))
+            )
+
+            bar_cards = base.mark_bar(size=18, opacity=0.8, color=card_color).encode(
+                y=alt.Y('Cards Received by Team:Q', title='Count', axis=alt.Axis(grid=True, tickMinStep=1)), # Ensure integer ticks
+                tooltip=[
+                    alt.Tooltip('Game:N'),
+                    alt.Tooltip('Cards Received by Team:Q', title='Team Cards')
+                ]
+            )
+
+            line_fouls = base.mark_line(point=alt.OverlayMarkDef(color=foul_color, size=50), strokeWidth=2.5, color=foul_color).encode(
+                y=alt.Y('Fouls Committed by Team:Q', axis=alt.Axis(tickMinStep=1)), # Uses the same y-axis
+                tooltip=[
+                    alt.Tooltip('Game:N'),
+                    alt.Tooltip('Fouls Committed by Team:Q', title='Team Fouls')
+                ]
+            )
+            
+            # Horizontal rule for Referee's Average Total Cards in their games
+            # Only add if the value is valid
+            layers = [bar_cards]#, line_fouls]
+            if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >= 0:
+                ref_avg_rule = alt.Chart(pd.DataFrame({'ref_avg_total': [referee_avg_total_cards_game]})).mark_rule(
+                    strokeDash=[6,4], strokeWidth=2, color=ref_line_color, opacity=0.9
+                ).encode(
+                    y='ref_avg_total:Q'
+                    # Tooltip for rule can be tricky, better to use caption
+                )
+                layers.append(ref_avg_rule)
+
+            # Determine Y-axis domain dynamically to include all data + ref line
+            max_cards = df_team_discipline['Cards Received by Team'].max() if not df_team_discipline.empty else 0
+            max_fouls = df_team_discipline['Fouls Committed by Team'].max() if not df_team_discipline.empty else 0
+            y_max = max(max_cards, max_fouls)
+            if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >=0:
+                y_max = max(max_cards, referee_avg_total_cards_game)#y_max
+            
+            y_domain = [0, y_max + 2] # Add some padding
+
+            layered_chart = alt.layer(*layers).resolve_scale(
+                y='shared' 
+            ).encode(
+            alt.Y(scale=alt.Scale(domain=y_domain)) # Apply the dynamic domain
+            ).properties(
+                title=alt.TitleParams(text=chart_title, anchor='middle', fontSize=13),
+                height=275,
+            ).configure_axis(
+                labelFontSize=10,
+                titleFontSize=11
+            ).configure_legend( # To create a custom legend for the lines/bars if needed
+                title=None,
+                orient='top',
+                padding=10,
+                labelFontSize=10,
+                symbolStrokeWidth=2
+            )
+            
+            st.altair_chart(layered_chart, use_container_width=True)
+            if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >=0:
+                st.caption(f"<span style='color:{ref_line_color}; font-weight:bold;'>⎯⎯</span> Referee Avg. Total Cards / Game: **{referee_avg_total_cards_game:.1f}**", unsafe_allow_html=True)
+
+        # def prepare_expected_cards_data(
+        #     card_spread_str, 
+        #     foul_spread_str, 
+        #     ref_cards_per_foul_for_this_team_context: float, # e.g., RefLast5CardsPerFoulHome
+        #     num_recent_games=5
+        # ):
+        #     if not card_spread_str or not foul_spread_str or pd.isna(ref_cards_per_foul_for_this_team_context):
+        #         return pd.DataFrame()
+
+        #     try:
+        #         card_values = [int(x) for x in card_spread_str.split(',')]
+        #         foul_values = [int(x) for x in foul_spread_str.split(',')]
+
+        #         card_values = card_values[:num_recent_games]
+        #         foul_values = foul_values[:num_recent_games]
+                
+        #         actual_num_games = min(len(card_values), len(foul_values))
+        #         if actual_num_games == 0: return pd.DataFrame()
+
+        #         game_labels = [f"G{i+1}" for i in range(actual_num_games)]
+                
+        #         expected_card_values = [
+        #             round(foul * ref_cards_per_foul_for_this_team_context) # Round to nearest whole card
+        #             for foul in foul_values[:actual_num_games]
+        #         ]
+
+        #         df = pd.DataFrame({
+        #             'Game': game_labels,
+        #             'Actual Cards Received': card_values[:actual_num_games],
+        #             'Expected Cards (based on Fouls & Ref C/F)': expected_card_values
+        #         })
+        #         return df
+        #     except (ValueError, TypeError):
+        #         return pd.DataFrame()
+
+        # def create_actual_vs_expected_cards_chart(
+        #     df_discipline_data: pd.DataFrame, 
+        #     referee_avg_total_cards_game: float, 
+        #     chart_title: str,
+        #     actual_card_color: str = 'darkorange',
+        #     expected_card_color: str = 'skyblue', # Different color for the line
+        #     ref_line_color: str = 'firebrick'
+        # ):
+        #     if df_discipline_data.empty:
+        #         st.caption("Insufficient data for discipline chart.")
+        #         return
+
+        #     base = alt.Chart(df_discipline_data).encode(
+        #         x=alt.X('Game:N', sort=None, title=None, axis=alt.Axis(labelAngle=0, labelPadding=5))
+        #     )
+
+        #     bar_actual_cards = base.mark_bar(size=18, opacity=0.8, color=actual_card_color).encode(
+        #         y=alt.Y('Actual Cards Received:Q', title='Cards', axis=alt.Axis(grid=True, tickMinStep=1)),
+        #         tooltip=[alt.Tooltip('Game:N'), alt.Tooltip('Actual Cards Received:Q', title='Actual Cards')]
+        #     )
+
+        #     line_expected_cards = base.mark_line(point=alt.OverlayMarkDef(color=expected_card_color, size=50), strokeWidth=2.5, color=expected_card_color).encode(
+        #         y=alt.Y('Expected Cards (based on Fouls & Ref C/F):Q', axis=alt.Axis(tickMinStep=1)), # Shared Y-axis
+        #         tooltip=[alt.Tooltip('Game:N'), alt.Tooltip('Expected Cards (based on Fouls & Ref C/F):Q', title='Expected Cards')]
+        #     )
+            
+        #     layers = [bar_actual_cards, line_expected_cards]
+        #     if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >= 0:
+        #         ref_avg_rule = alt.Chart(pd.DataFrame({'ref_avg_total': [referee_avg_total_cards_game]})).mark_rule(
+        #             strokeDash=[6,4], strokeWidth=2, color=ref_line_color, opacity=0.9
+        #         ).encode(y='ref_avg_total:Q')
+        #         layers.append(ref_avg_rule)
+
+        #     max_actual = df_discipline_data['Actual Cards Received'].max() if 'Actual Cards Received' in df_discipline_data else 0
+        #     max_expected = df_discipline_data['Expected Cards (based on Fouls & Ref C/F)'].max() if 'Expected Cards (based on Fouls & Ref C/F)' in df_discipline_data else 0
+        #     y_max = max(max_actual, max_expected)
+        #     if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >=0:
+        #         y_max = max(y_max, referee_avg_total_cards_game)
+        #     y_domain = [0, y_max + 1.5] # Adjust padding
+
+        #     layered_chart = alt.layer(*layers).resolve_scale(
+        #         y='shared' 
+        #     ).encode(
+        #     alt.Y(scale=alt.Scale(domain=y_domain,nice=False), axis=alt.Axis(tickMinStep=1)) 
+        #     ).properties(
+        #         title=alt.TitleParams(text=chart_title, anchor='middle', fontSize=13),
+        #         height=275,
+        #     ).configure_axis(labelFontSize=10, titleFontSize=11)
+            
+        #     st.altair_chart(layered_chart, use_container_width=True)
+        #     if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >=0:
+        #         st.caption(f"<span style='color:{ref_line_color}; font-weight:bold;'>⎯⎯</span> Referee Avg. Total Cards / Game: **{referee_avg_total_cards_game:.1f}**", unsafe_allow_html=True)
+
+        # --- Example Usage in Streamlit ---
+        
+        st.markdown("#### Team Discipline vs. Referee Tendencies")
+
+        referee_name_for_title = selected_match_data.get("Referee", 'The Referee') #"RefereeFullName"
+
+        ref_avg_total_cards = selected_match_data.get('RefLast5AvgTotalCards')
+
+        col_home_disc, col_away_disc = st.columns(2)
+        # 'RefSeasonAvgTotalCards','RefSeasonAvgHomeTeamCards','RefSeasonAvgAwayTeamCards',
+        # 'RefLast5AvgTotalCards','RefLast5AvgHomeTeamCards','RefLast5AvgAwayTeamCards',
+        # 'RefLast5HomeTeamCards','RefLast5AwayTeamCards',
+
+        # HOME TEAM DISCIPLINE SECTION
+        with col_home_disc:
+            st.markdown(f"##### {home_team} (Last 5 Home Games)")
+            
+            # Key Metrics Display
+            home_team_fouls_spread_l5 = selected_match_data.get('l5_home_fouls_for', "0")
+            home_team_cards_spread_l5 = selected_match_data.get('l5_home_cards_for', "0")
+            home_team_avg_fouls_l5 = np.mean([int(x) for x in selected_match_data.get('l5_home_fouls_for', "0").split(',') if x]) if selected_match_data.get('l5_home_fouls_for') else np.nan
+            home_team_avg_cards_l5 = np.mean([int(x) for x in selected_match_data.get('l5_home_cards_for', "0").split(',') if x]) if selected_match_data.get('l5_home_cards_for') else np.nan
+            
+            ref_cards_per_foul_home_l5 = selected_match_data.get('RefLast5CardsPerFoulHome') # Specific to ref for this team at home
+            ref_strictness_label_home_l5 = selected_match_data.get('RefLast5HomeLabel') # Ref's strictness for this team at home
+            
+            ref_home_average_l5 = selected_match_data.get('RefLast5AvgHomeTeamCards')
+
+            if pd.notna(home_team_avg_fouls_l5):
+                st.markdown(f"- Avg. Fouls Committed: **{home_team_avg_fouls_l5:.1f}**")
+            if pd.notna(home_team_avg_cards_l5):
+                st.markdown(f"- Avg. Cards Received: **{home_team_avg_cards_l5:.1f}**")
+            # if ref_avg_total_cards:
+            #     st.markdown(f"- {referee_name_for_title}'s Cards/Game (Overall avg, L5): **{ref_avg_total_cards}**")
+            # if ref_home_average_l5:
+            #     st.markdown(f"- {referee_name_for_title}'s Cards/Game (vs Home, L5): **{ref_home_average_l5}**")
+            if pd.notna(ref_cards_per_foul_home_l5):
+                st.markdown(f"- {referee_name_for_title}'s Cards/Foul (vs Home, L5): **{ref_cards_per_foul_home_l5/100:.2f}**")
+            if ref_strictness_label_home_l5:
+                 st.markdown(f"- {referee_name_for_title}'s Strictness (vs Home, L5): **{ref_strictness_label_home_l5}**")
+            
+            # Chart
+            df_home_disc_data = prepare_discipline_data(
+                selected_match_data.get('l5_home_cards_for'),
+                selected_match_data.get('l5_home_fouls_for')
+            )
+            # Assuming you have a field for referee's average total cards in their games
+            # ref_avg_total_cards = selected_match_data.get('RefSeasonTotalCardsAvg') # Or RefLast5TotalCardsAvg
+            
+            create_layered_discipline_chart(
+                df_team_discipline=df_home_disc_data,
+                referee_avg_total_cards_game=ref_avg_total_cards, # This is total cards by ref in a game
+                chart_title=f"{home_team} Discipline"
+            )
+            
+            # df_home_exp_data = prepare_expected_cards_data( home_team_cards_spread_l5,home_team_fouls_spread_l5, ref_cards_per_foul_home_l5)
+
+            # create_actual_vs_expected_cards_chart(
+            #     df_discipline_data=df_home_exp_data,
+            #     referee_avg_total_cards_game=ref_avg_total_cards,
+            #     chart_title=f"{home_team} Actual vs. Expected Cards"
+            # )
+            st.caption(f"Bars: Cards Received by {home_team}. Line: Fouls Committed by {home_team}.")
+
+
+        # AWAY TEAM DISCIPLINE SECTION (similar structure)
+        with col_away_disc:
+            st.markdown(f"##### {away_team} (Last 5 Away Games)")
+            
+            away_team_fouls_spread_l5 = selected_match_data.get('l5_away_fouls_for', "0")
+            away_team_cards_spread_l5 = selected_match_data.get('l5_away_cards_for', "0")
+            away_team_avg_fouls_l5 = np.mean([int(x) for x in selected_match_data.get('l5_away_fouls_for', "0").split(',') if x]) if selected_match_data.get('l5_away_fouls_for') else np.nan
+            away_team_avg_cards_l5 = np.mean([int(x) for x in selected_match_data.get('l5_away_cards_for', "0").split(',') if x]) if selected_match_data.get('l5_away_cards_for') else np.nan
+            ref_cards_per_foul_away_l5 = selected_match_data.get('RefLast5CardsPerFoulAway')
+            ref_strictness_label_away_l5 = selected_match_data.get('RefLast5AwayLabel')
+            ref_away_average_l5 = selected_match_data.get('RefLast5AvgAwayTeamCards')
+
+            if pd.notna(away_team_avg_fouls_l5):
+                st.markdown(f"- Avg. Fouls Committed: **{away_team_avg_fouls_l5:.1f}**")
+            if pd.notna(away_team_avg_cards_l5):
+                st.markdown(f"- Avg. Cards Received: **{away_team_avg_cards_l5:.1f}**")
+            # if ref_avg_total_cards:
+            #     st.markdown(f"- {referee_name_for_title}'s Cards/Game (Overall avg, L5): **{ref_avg_total_cards}**")
+            # if ref_away_average_l5:
+            #     st.markdown(f"- {referee_name_for_title}'s Cards/Game (vs Away, L5): **{ref_away_average_l5}**")
+            if pd.notna(ref_cards_per_foul_away_l5):
+                st.markdown(f"- {referee_name_for_title}'s Cards/Foul (vs Away, L5): **{ref_cards_per_foul_away_l5/100:.2f}**")
+            if ref_strictness_label_away_l5:
+                 st.markdown(f"- {referee_name_for_title}'s Strictness (vs Away, L5): **{ref_strictness_label_away_l5}**")
+
+            # Chart
+            df_away_disc_data = prepare_discipline_data(
+                selected_match_data.get('l5_away_cards_for'),
+                selected_match_data.get('l5_away_fouls_for')
+            )
+            # ref_avg_total_cards is the same for the match
+            
+            create_layered_discipline_chart(
+                df_team_discipline=df_away_disc_data,
+                referee_avg_total_cards_game=ref_avg_total_cards,
+                chart_title=f"{away_team} Discipline"
+            )
+
+            # df_away_exp_data = prepare_expected_cards_data(away_team_cards_spread_l5,away_team_fouls_spread_l5,  ref_cards_per_foul_away_l5)
+
+            # create_actual_vs_expected_cards_chart(
+            #     df_discipline_data=df_away_exp_data,
+            #     referee_avg_total_cards_game=ref_avg_total_cards,
+            #     chart_title=f"{home_team} Actual vs. Expected Cards"
+            # )
+            
+            st.caption(f"Bars: Cards Received by {away_team}. Line: Fouls Committed by {away_team}.")
+
+        st.markdown("---") # Main section divider
+
         stats_cols = st.columns(4)
         with stats_cols[0]:
             st.markdown("#### Goal Trends")
@@ -2787,6 +3122,7 @@ else:
             st.markdown("---")
 
             st.markdown("**Cards (O/U)**")
+            # st.metric(label="Referee Home Avg.", value=ref_l5_home_avg, )
             st.markdown("**Over 1.5 Cards:**")
             st.markdown(create_colored_progress_bar(Last5HomeOver1YellowCards, text_label="O1.5"), unsafe_allow_html=True)
             st.markdown("**Over 2.5 Cards:**")
