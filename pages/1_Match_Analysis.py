@@ -1251,7 +1251,191 @@ def display_stat_row(label, home_value, away_value, home_align='right', label_al
         st.markdown(f"<div style='text-align: {label_align}; font-weight: {label_weight};'>{label}</div>", unsafe_allow_html=True)
     with col3:
         st.markdown(f"<div style='text-align: {away_align};'>{away_display}</div>", unsafe_allow_html=True)
+# def parse_odds_field_name(field_name):
+#     if not field_name.endswith("Odds"): return None
+#     parts = field_name[:-4].split('_'); 
+#     if not parts: return None
+#     market = parts[0]; bet_specific_parts = parts[1:]
+#     bet_specific = " ".join(bet_specific_parts)
+#     return {'market': market, 'bet_specific': bet_specific, 'raw_bet_type': "_".join(parts[1:]) + "Odds"}
 
+# def group_odds_by_market(match_data):
+#     grouped_odds = defaultdict(list)
+#     market_order = {} # To maintain a rough order of markets
+
+#     # Define a preferred order for bet specifics within common markets
+#     bet_specific_order = {
+#         "Match Winner": ["Home", "Draw", "Away"],
+#         "Double Chance": ["Home/Draw", "Home/Away", "Draw/Away"],
+#         "Home/Away": ["Home", "Away"], # Draw No Bet essentially
+#         "Both Teams Score": ["Yes", "No"],
+#         "First Half Winner": ["Home", "Draw", "Away"],
+#         "Second Half Winner": ["Home", "Draw", "Away"],
+#         # For O/U, sorting will be mostly numerical based on the line
+#     }
+
+#     i = 0
+#     for field, value in match_data.items():
+#         parsed = parse_odds_field_name(field)
+#         if parsed:
+#             if parsed['market'] not in market_order:
+#                 market_order[parsed['market']] = i
+#                 i += 1
+            
+#             grouped_odds[parsed['market']].append({
+#                 'bet_label': parsed['bet_specific'],
+#                 'odds_value': value if pd.notna(value) else "--", # Handle NaN odds
+#                 'original_field': field
+#             })
+
+#     # Sort markets by their appearance order (or define a custom market order)
+#     sorted_grouped_odds = dict(sorted(grouped_odds.items(), key=lambda item: market_order.get(item[0], 999)))
+    
+#     # Sort bets within each market
+#     for market, bets in sorted_grouped_odds.items():
+#         if market in bet_specific_order:
+#             order_list = bet_specific_order[market]
+#             bets.sort(key=lambda x: order_list.index(x['bet_label']) if x['bet_label'] in order_list else 999)
+#         elif "Over/Under" in market or "Over Under" in market:
+#             # Custom sort for Over/Under: Over X.X then Under X.X, then by X.X value
+#             def sort_key_ou(bet_item):
+#                 label = bet_item['bet_label']
+#                 is_over = label.lower().startswith('over') or label.lower().startswith('o ')
+#                 line_match = re.search(r'(\d+(?:\.\d+)?)', label)
+#                 line_val = float(line_match.group(1)) if line_match else float('inf')
+#                 return (line_val, not is_over) # Sort by line, then Over before Under
+#             bets.sort(key=sort_key_ou)
+#         else:
+#             bets.sort(key=lambda x: x['bet_label']) # Default alphabetical
+
+#     return sorted_grouped_odds
+
+# def parse_odds_field_name(field_name):
+    # if not field_name.endswith("Odds"): return None
+    # parts = field_name[:-4].split('_');
+    # if not parts: return None
+    # market = parts[0]; bet_specific_parts = parts[1:]
+    # bet_specific = " ".join(bet_specific_parts)
+    # return {'market': market, 'bet_specific': bet_specific, 'raw_bet_type': "_".join(parts[1:]) + "Odds"}
+
+# def group_odds_by_market(match_data):
+#     grouped_odds = defaultdict(list)
+#     market_order = {} 
+#     bet_specific_order = {
+#         "Match Winner": ["Home", "Draw", "Away"], # Corresponds to 1, X, 2
+#         "Double Chance": ["Home/Draw", "Home/Away", "Draw/Away"], # Corresponds to 1X, 12, X2
+#         "Home/Away": ["Home", "Away"],
+#         "Both Teams Score": ["Yes", "No"],
+#         "Result & BTTS": [ # Define a specific order for this complex market
+#             "Home Yes", "Away Yes", "Draw Yes",
+#             "Home No", "Away No", "Draw No"
+#         ],
+#         # Add other markets with specific outcome orders if needed
+#     }
+#     # Mapping for display labels if different from bet_label
+#     display_label_map = {
+#         "Match Winner": {"Home": "1", "Draw": "X", "Away": "2"},
+#         "Double Chance": {"Home/Draw": "1X", "Home/Away": "12", "Draw/Away": "X2"}
+#     }
+#     i = 0
+#     for field, value in match_data.items():
+#         parsed = parse_odds_field_name(field)
+#         if parsed:
+#             if parsed['market'] not in market_order:
+#                 market_order[parsed['market']] = i; i += 1
+            
+#             display_bet_label = parsed['bet_specific']
+#             # Check if there's a specific display label for this market and bet
+#             if parsed['market'] in display_label_map and parsed['bet_specific'] in display_label_map[parsed['market']]:
+#                 display_bet_label = display_label_map[parsed['market']][parsed['bet_specific']]
+
+#             grouped_odds[parsed['market']].append({
+#                 'bet_label': parsed['bet_specific'], # Original label for sorting/logic
+#                 'display_label': display_bet_label,  # Label for display
+#                 'odds_value': value if pd.notna(value) else "N/A",
+#                 'original_field': field
+#             })
+#     sorted_grouped_odds = dict(sorted(grouped_odds.items(), key=lambda item: market_order.get(item[0], 999)))
+#     for market, bets in sorted_grouped_odds.items():
+#         if market in bet_specific_order:
+#             order_list = bet_specific_order[market]
+#             # Sort using the original 'bet_label' for consistency with the order_list keys
+#             bets.sort(key=lambda x: order_list.index(x['bet_label']) if x['bet_label'] in order_list else 999)
+#         elif "Over/Under" in market or "Over Under" in market: # Keep O/U sorting
+#             def sort_key_ou(bet_item):
+#                 label = bet_item['bet_label'].lower()
+#                 is_over = label.startswith('over') or label.startswith('o ')
+#                 line_match = re.search(r'(\d+(?:\.\d+)?)', label)
+#                 line_val = float(line_match.group(1)) if line_match else float('inf')
+#                 return (line_val, not is_over)
+#             bets.sort(key=sort_key_ou)
+#         else:
+#             bets.sort(key=lambda x: x['display_label']) # Default alphabetical on display_label
+#     return sorted_grouped_odds
+
+def parse_odds_field_name(field_name):
+    if not field_name.endswith("Odds"): return None
+    parts = field_name[:-4].split('_');
+    if not parts: return None
+    market = parts[0]; bet_specific_parts = parts[1:]
+    bet_specific = " ".join(bet_specific_parts)
+    return {'market': market, 'bet_specific': bet_specific, 'raw_bet_type': "_".join(parts[1:]) + "Odds"}
+
+def group_odds_by_market(match_data):
+    grouped_odds = defaultdict(list)
+    market_order = {}
+    bet_specific_order = {
+        "Match Winner": ["Home", "Draw", "Away"],
+        "Double Chance": ["Home/Draw", "Home/Away", "Draw/Away"],
+        "Home/Away": ["Home", "Away"],
+        "Both Teams Score": ["Yes", "No"],
+        "Result & BTTS": ["Home Yes", "Away Yes", "Draw Yes", "Home No", "Away No", "Draw No"],
+        "First Half Winner": ["Home", "Draw", "Away"],
+        "Second Half Winner": ["Home", "Draw", "Away"],
+        "Both Teams Score - First Half": ["Yes", "No"], # Added
+        "Draw No Bet (1st Half)": ["Home", "Away"],      # Added
+        "Draw No Bet (2nd Half)": ["Home", "Away"],      # Added
+        # Add more fixed outcome markets here if they have a clear, limited set of outcomes
+    }
+    display_label_map = {
+        "Match Winner": {"Home": "1", "Draw": "X", "Away": "2"},
+        "Double Chance": {"Home/Draw": "1X", "Home/Away": "12", "Draw/Away": "X2"},
+        "First Half Winner": {"Home": "1", "Draw": "X", "Away": "2"},# (FH)
+        "Second Half Winner": {"Home": "1", "Draw": "X", "Away": "2"},# (SH)
+        "Draw No Bet (1st Half)": {"Home": "Home (DNB)", "Away": "Away (DNB)"},
+        "Draw No Bet (2nd Half)": {"Home": "Home (DNB)", "Away": "Away (DNB)"},
+    }
+    i = 0
+    for field, value in match_data.items():
+        parsed = parse_odds_field_name(field)
+        if parsed:
+            if parsed['market'] not in market_order:
+                market_order[parsed['market']] = i; i += 1
+            display_bet_label = parsed['bet_specific']
+            if parsed['market'] in display_label_map and parsed['bet_specific'] in display_label_map[parsed['market']]:
+                display_bet_label = display_label_map[parsed['market']][parsed['bet_specific']]
+            grouped_odds[parsed['market']].append({
+                'bet_label': parsed['bet_specific'],
+                'display_label': display_bet_label,
+                'odds_value': value if pd.notna(value) else "--",
+                'original_field': field
+            })
+    sorted_grouped_odds = dict(sorted(grouped_odds.items(), key=lambda item: market_order.get(item[0], 999)))
+    for market, bets in sorted_grouped_odds.items():
+        if market in bet_specific_order:
+            order_list = bet_specific_order[market]
+            bets.sort(key=lambda x: order_list.index(x['bet_label']) if x['bet_label'] in order_list else 999)
+        elif "Over/Under" in market or "Over Under" in market or "Total" in market: # For O/U type markets
+            def sort_key_ou(bet_item):
+                label = bet_item['bet_label'].lower()
+                is_over = 'over' in label or label.startswith('o ')
+                line_match = re.search(r'(\d+(?:\.\d+)?)', label)
+                line_val = float(line_match.group(1)) if line_match else float('inf')
+                return (line_val, not is_over) # Sort by line, then Over before Under
+            bets.sort(key=sort_key_ou)
+        else:
+            bets.sort(key=lambda x: x['display_label'])
+    return sorted_grouped_odds
 # --- Streamlit App ---
 # st.set_page_config(layout="wide")
 
@@ -2225,7 +2409,7 @@ else:
     pred_cols4.info(f"**Advice:** {selected_match_data.get('advice', '--')}")
 
     # --- Tabs for Detailed Stats (Added Recommendations Tab) ---
-    tab_titles = ["🎯 Recommendations", "📈 Performance & Goals", "🤝 H2H", "✨ Insights"]
+    tab_titles = ["🎯 Recommendations", "📈 Performance & Goals", "🤝 H2H", "✨ Insights"]#, "🎲 Odds"
     tabs = st.tabs(tab_titles)
 
     # Match report 
@@ -2238,21 +2422,15 @@ else:
     # Recommendations Tab (New)
     with tabs[0]:
         st.markdown("#### ⭐ Prediction Overview")
-        rec_col1, rec_col2 = st.columns([0.5,4])
+        rec_col1, rec_col2 = st.columns([3,2])
         with rec_col1:
-            
             st.metric("Overall Confidence", f"{confidence_score}") #/10
-        with rec_col2:
             st.success(f"**Best Bet:** {pred_display}")
-        #      st.info(f"**Advice:** {selected_match_data.get('advice', '--')}")
-        #      st.warning(f"**Value Bets:** `{selected_match_data.get('value_bets', '--')}`")
-        # --- Check and Display Best Bet ---
-        # Pass necessary stats to the check function      
-        st.markdown("---")
+            st.markdown("---")
 
-        predictions_for_table = []
-        pred_col1, pred_col2 = st.columns([2,1])#, pred_col3
-        with pred_col1:
+            predictions_for_table = []
+            # pred_col1, pred_col2 = st.columns([2,1])#, pred_col3
+            # with pred_col1:
             st.markdown("##### Detailed Predictions")
             outcome_display = ""
             outcome_conf = selected_match_data.get('pred_outcome_conf')
@@ -2393,31 +2571,385 @@ else:
                 )
             else:
                 st.info("No detailed predictions available for this match.")
-        with pred_col2:
+            # with pred_col2:
+                
+
+
+            st.markdown("---")
+            st.markdown("##### Expected Value")
+            ev_h = f"{selected_match_data.get('exp_val_h') * 100:.2f}%" if selected_match_data.get('exp_val_h') is not None else None
+            ev_d = f"{selected_match_data.get('exp_val_d') * 100:.2f}%" if selected_match_data.get('exp_val_d') is not None else None
+            ev_a = f"{selected_match_data.get('exp_val_a') * 100:.2f}%" if selected_match_data.get('exp_val_a') is not None else None
+            
+            pred_col4, pred_col5, pred_col6 = st.columns(3)
+            if any([ev_h, ev_d, ev_a]):
+                with pred_col4:
+                    # st.caption(f"**EV (Home):** {ev_h or '--'}")
+                    st.metric("EV (Home)", ev_h or '--')
+                with pred_col5:
+                    # st.caption(f"**EV (Draw):** {ev_d or '--'}")
+                    st.metric("EV (Draw)", ev_d or '--')
+                with pred_col6:
+                    # st.caption(f"**EV (Away):** {ev_a or '--'}")
+                    st.metric("EV (Away)", ev_a or '--')
+                #  st.caption(f"**EV:** H: {ev_h or '--'} | D: {ev_d or '--'} | A: {ev_a or '--'}")
+            else:
+                st.caption("No Expected Value data.")
+
+        with rec_col2:
             st.markdown("##### Odds")
+            
+            # if not selected_match_data:
+                #     st.info("Select a match to view odds.")
+                # else:
+                    # Group the odds from selected_match_data
+                    # odds_by_market = group_odds_by_market(selected_match_data)
+
+                    # if not odds_by_market:
+                    #     st.info("No odds data available for this match.")
+                    # else:
+                    #     for market_name, odds_list in odds_by_market.items():
+                    #         with st.expander(f"{market_name}", expanded=False): # Start collapsed
+                    #             # Determine number of columns based on odds_list length for that market
+                    #             # Max 3 columns for readability, or fewer if fewer items
+                    #             num_items = len(odds_list)
+                    #             if num_items == 0:
+                    #                 st.caption("No odds for this market.")
+                    #                 continue
+                                
+                    #             cols = st.columns(min(num_items, 3)) 
+                    #             col_idx = 0
+                    #             for odd_item in odds_list:
+                    #                 with cols[col_idx % len(cols)]:
+                    #                     bet_label = odd_item['bet_label']
+                    #                     odds_val = odd_item['odds_value']
+                                        
+                    #                     # For Over/Under, try to make label more concise if it's long
+                    #                     if "Over/Under" in market_name or "Over Under" in market_name:
+                    #                         # 'bet_label' is already 'Over X.X' or 'Under X.X'
+                    #                         display_label = bet_label 
+                    #                     elif market_name == "Total - Home" or market_name == "Total - Away":
+                    #                         display_label = bet_label # e.g. "Over 0.5"
+                    #                     else:
+                    #                         display_label = bet_label
+
+                    #                     # Display using st.metric or st.text_input (as placeholder)
+                    #                     if isinstance(odds_val, (int, float)):
+                    #                         st.metric(label=display_label, value=f"{odds_val:.2f}")
+                    #                     else: # For "N/A" or other non-numeric
+                    #                         st.metric(label=display_label, value=str(odds_val)) 
+                                        
+                    #                     # If you want to use text_input as a placeholder for future editing:
+                    #                     # st.text_input(label=display_label, value=str(odds_val), key=odd_item['original_field'], disabled=True)
+                    #                 col_idx += 1
+            
+
+                # st.markdown(custom_css, unsafe_allow_html=True) # UNCOMMENT TO APPLY CSS
 
 
-        st.markdown("---")
-        st.markdown("##### Expected Value")
-        ev_h = f"{selected_match_data.get('exp_val_h') * 100:.2f}%" if selected_match_data.get('exp_val_h') is not None else None
-        ev_d = f"{selected_match_data.get('exp_val_d') * 100:.2f}%" if selected_match_data.get('exp_val_d') is not None else None
-        ev_a = f"{selected_match_data.get('exp_val_a') * 100:.2f}%" if selected_match_data.get('exp_val_a') is not None else None
-        
-        pred_col4, pred_col5, pred_col6 = st.columns(3)
-        if any([ev_h, ev_d, ev_a]):
-            with pred_col4:
-                # st.caption(f"**EV (Home):** {ev_h or '--'}")
-                st.metric("EV (Home)", ev_h or '--')
-            with pred_col5:
-                # st.caption(f"**EV (Draw):** {ev_d or '--'}")
-                st.metric("EV (Draw)", ev_d or '--')
-            with pred_col6:
-                # st.caption(f"**EV (Away):** {ev_a or '--'}")
-                st.metric("EV (Away)", ev_a or '--')
-            #  st.caption(f"**EV:** H: {ev_h or '--'} | D: {ev_d or '--'} | A: {ev_a or '--'}")
-        else:
-            st.caption("No Expected Value data.")
+                # with tabs[1]: # Your "Odds" tab
+                    # st.markdown(f"### 🎲 Odds for {selected_match_data.get('HomeTeam', '')} vs {selected_match_data.get('AwayTeam', '')}")
 
+                # if not selected_match_data:
+                    #  st.info("Select a match to view odds.")
+                # else:
+                #     odds_by_market = group_odds_by_market(selected_match_data)
+
+                #     if not odds_by_market:
+                #         st.info("No odds data available for this match.")
+                #     else:
+                #         # Define markets to display in the table format
+                #         table_markets = ["Match Winner", "Double Chance", "Both Teams Score", "Result & BTTS", "Total-Home", "Total-Away", "Goals Over/Under", "Corners Over Under", "Cards Over/Under"]
+                #         # Other markets (like O/U goals, corners, cards) can use expanders with st.metric as before
+
+                #         for market_name, odds_list in odds_by_market.items():
+                #             if market_name in table_markets:
+                #                 st.markdown(f"<div class='market-title'>{market_name}</div>", unsafe_allow_html=True)
+                                
+                #                 if not odds_list:
+                #                     st.caption("No odds for this market.")
+                #                     continue
+
+                #                 # Special handling for "Result & BTTS" due to its 2-row structure
+                #                 if market_name == "Result & BTTS":
+                #                     # Expecting 6 items in a specific order: H Y, A Y, D Y, H N, A N, D N
+                #                     if len(odds_list) == 6:
+                #                         # First row (Yes outcomes)
+                #                         cols_yes = st.columns(3)
+                #                         for i in range(3):
+                #                             with cols_yes[i]:
+                #                                 # Use display_label for the cell header
+                #                                 st.markdown(f"<div class='odds-table-cell-label'>{odds_list[i]['display_label']}</div>", unsafe_allow_html=True)
+                #                                 st.markdown(f"<div class='odds-table-cell-value'>{odds_list[i]['odds_value']:.2f if isinstance(odds_list[i]['odds_value'], (int, float)) else odds_list[i]['odds_value']}</div>", unsafe_allow_html=True)
+                #                         # Second row (No outcomes)
+                #                         cols_no = st.columns(3)
+                #                         for i in range(3):
+                #                             with cols_no[i]:
+                #                                 st.markdown(f"<div class='odds-table-cell-label'>{odds_list[i+3]['display_label']}</div>", unsafe_allow_html=True)
+                #                                 st.markdown(f"<div class='odds-table-cell-value'>{odds_list[i+3]['odds_value']:.2f if isinstance(odds_list[i+3]['odds_value'], (int, float)) else odds_list[i+3]['odds_value']}</div>", unsafe_allow_html=True)
+                #                     else:
+                #                         st.caption(f"Incorrect data format for {market_name}.")
+                #                 else:
+                #                     # For other table markets (1X2, DC, BTTS)
+                #                     num_outcomes = len(odds_list)
+                #                     cols_labels = st.columns(num_outcomes)
+                #                     cols_values = st.columns(num_outcomes)
+
+                #                     for i, odd_item in enumerate(odds_list):
+                #                         with cols_labels[i]:
+                #                             st.markdown(f"<div class='odds-table-cell-label'>{odd_item['display_label']}</div>", unsafe_allow_html=True)
+                #                         with cols_values[i]:
+                #                             st.markdown(f"<div class='odds-table-cell-value'>{odd_item['odds_value'] if isinstance(odd_item['odds_value'], (int, float)) else odd_item['odds_value']}</div>", unsafe_allow_html=True)
+                #                 st.write("") # Add a little vertical space
+                            
+                #             # For markets NOT in table_markets, use the expander + st.metric approach (from previous response)
+                #             elif "Over/Under" in market_name or "Over Under" in market_name or "Total -" in market_name: # Example condition
+                #                 with st.expander(f"{market_name}", expanded=False):
+                #                     num_items = len(odds_list)
+                #                     if num_items == 0: 
+                #                         st.caption("No odds."); continue
+                                    
+                #                     # Display O/U pairs side-by-side
+                #                     for i in range(0, num_items, 2):
+                #                         cols_ou = st.columns(2)
+                #                         with cols_ou[0]:
+                #                             st.metric(label=odds_list[i]['display_label'], value=f"{odds_list[i]['odds_value']:.2f}" if isinstance(odds_list[i]['odds_value'], (int, float)) else str(odds_list[i]['odds_value']))
+                #                         if i + 1 < num_items:
+                #                             with cols_ou[1]:
+                #                                 st.metric(label=odds_list[i+1]['display_label'], value=f"{odds_list[i+1]['odds_value']:.2f}" if isinstance(odds_list[i+1]['odds_value'], (int, float)) else str(odds_list[i+1]['odds_value']))
+                #                         else: # Odd number of O/U items (shouldn't happen if paired correctly)
+                #                             with cols_ou[1]: 
+                #                                 st.empty()
+
+
+                #             # Add more elif blocks here for other display styles if needed
+                #             # else: # Default for any other markets
+                #             #     with st.expander(f"{market_name} (Other)", expanded=False):
+                #             #         for odd_item in odds_list:
+                #             # st.text(f"{odd_item['display_label']}: {odd_item['odds_value']}")
+            # #4A5568        #384d67 #1e44d6
+            custom_css = """
+            <style>
+                .odds-table-cell-label {
+                    background-color: #20283e;
+                    color: white;
+                    padding: 1px;
+                    text-align: center;
+                    font-weight: bold;
+                    border: 1px solid #2D3748;
+                    min-height: 15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .odds-table-cell-value {
+                    background-color: #2C5282; /*#ac4e31#6ab190 #1da54b*/
+                    color: white;
+                    padding: 1px;
+                    text-align: center;
+                    border: 1px solid #2D3748;
+                    font-size: 0.9em;
+                    min-height: 15px;
+                    display: flex;
+                    align-items: center; justify-content: center;
+                }
+                .market-title-main { /* For titles inside the main expander */
+                    font-size: 0.9em; /* Slightly smaller than expander title */
+                    font-weight: bold;
+                    margin-top: 2px;
+                    margin-bottom: 4px;
+                    /* border-bottom: 1px solid #4A5568; */ /* Optional separator */
+                    /* padding-bottom: 4px; */
+                }
+                .odds-expander .stButton>button { /* Target buttons inside expanders if needed */
+                    /* Example: st.button("Bet Now", key=...) */
+                }
+                 .ou-header-label { /* Specific for O/U table headers "Line", "Over", "Under" */
+                    background-color: #20283e; 
+                    color: white; 
+                    padding: 4px; 
+                    text-align: center;
+                    font-weight: bold; 
+                    border: 1px solid #2D3748; 
+                    min-height: 15px;
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    font-size: 0.9em;
+                }
+                /*.ou-table-header div, .ou-table-row div {
+                    text-align: center;
+                    padding: 6px 4px; /* Reduced padding */
+                    font-size: 0.95em; /* Slightly smaller font */
+                    border-bottom: 1px solid #4A5568; /* Separator line for rows */
+                }
+                .ou-table-header div {
+                    font-weight: bold;
+                    background-color: #3a4556; /* Slightly different header bg */
+                    color: white;
+                }
+                .ou-table-row div:first-child { /* Line column */
+                    font-weight: bold;
+                }*/
+            </style>
+            """
+            st.markdown(custom_css, unsafe_allow_html=True) # UNCOMMENT TO APPLY CSS
+
+            
+            if not selected_match_data:
+                st.info("Select a match to view odds.")
+            else:
+                odds_by_market = group_odds_by_market(selected_match_data)
+
+                if not odds_by_market:
+                    st.info("No odds data available for this match.")
+                else:
+                    # Define markets that are suitable for the compact table display
+                    # These typically have 2 or 3 outcomes, or 6 for Result&BTTS
+                    compact_table_markets = [
+                        "Match Winner", "Double Chance", "Home/Away", 
+                        "Both Teams Score", "Result & BTTS",
+                        "First Half Winner", "Second Half Winner",
+                        "Both Teams Score - First Half", 
+                        "Draw No Bet (1st Half)", "Draw No Bet (2nd Half)",
+                        # Add any other markets that fit this 2/3 outcome per row style
+                    ]
+
+                    # --- Main Expander for Key Table Markets ---
+                    with st.expander("Key Betting Markets", expanded=True): # Start expanded
+                        has_content_in_main_expander = False
+                        for market_name in compact_table_markets: # Iterate in defined order if needed
+                            if market_name in odds_by_market:
+                                odds_list = odds_by_market[market_name]
+                                if not odds_list: continue
+                                
+                                has_content_in_main_expander = True
+                                st.markdown(f"<div class='market-title-main'>{market_name}</div>", unsafe_allow_html=True)
+
+                                if market_name == "Result & BTTS":
+                                    if len(odds_list) == 6: # Expecting 6 outcomes
+                                        cols_yes = st.columns(3)
+                                        for i in range(3):
+                                            with cols_yes[i]:
+                                                st.markdown(f"<div class='odds-table-cell-label'>{odds_list[i]['display_label']}</div>", unsafe_allow_html=True)
+                                                st.markdown(f"<div class='odds-table-cell-value'>{odds_list[i]['odds_value']:.2f if isinstance(odds_list[i]['odds_value'], (int, float)) else odds_list[i]['odds_value']}</div>", unsafe_allow_html=True)
+                                        cols_no = st.columns(3)
+                                        for i in range(3):
+                                            with cols_no[i]:
+                                                st.markdown(f"<div class='odds-table-cell-label'>{odds_list[i+3]['display_label']}</div>", unsafe_allow_html=True)
+                                                st.markdown(f"<div class='odds-table-cell-value'>{odds_list[i+3]['odds_value']:.2f if isinstance(odds_list[i+3]['odds_value'], (int, float)) else odds_list[i+3]['odds_value']}</div>", unsafe_allow_html=True)
+                                    else:
+                                        st.caption(f"Data format error for {market_name}.")
+                                else: # For other 2 or 3 outcome markets
+                                    num_outcomes = len(odds_list)
+                                    cols_labels = st.columns(num_outcomes)
+                                    cols_values = st.columns(num_outcomes)
+                                    for i, odd_item in enumerate(odds_list):
+                                        with cols_labels[i]:
+                                            st.markdown(f"<div class='odds-table-cell-label'>{odd_item['display_label']}</div>", unsafe_allow_html=True)
+                                        with cols_values[i]:
+                                            st.markdown(f"<div class='odds-table-cell-value'>{odd_item['odds_value'] if isinstance(odd_item['odds_value'], (int, float)) else odd_item['odds_value']}</div>", unsafe_allow_html=True)
+                                st.write("") # Small vertical space after each market table
+                        
+                        if not has_content_in_main_expander:
+                            st.caption("No key market odds available.")
+
+                    # --- Individual Expanders for Over/Under Markets ---
+                    # for market_name, odds_list in odds_by_market.items():
+                    #     if market_name not in compact_table_markets: # Process markets not handled above
+                    #         # This will catch all "Goals Over/Under", "Corners Over Under", "Cards Over/Under", "Total - Home/Away", etc.
+                    #         with st.expander(f"{market_name} Odds", expanded=False):
+                    #             if not odds_list:
+                    #                 st.caption("No odds for this market.")
+                    #                 continue
+                                
+                    #             # Display O/U pairs side-by-side using st.metric
+                    #             for i in range(0, len(odds_list), 2): # Step by 2 for pairs
+                    #                 cols_ou = st.columns(2)
+                    #                 with cols_ou[0]:
+                    #                     st.metric(label=odds_list[i]['display_label'], 
+                    #                                 value=f"{odds_list[i]['odds_value']:.2f}" if isinstance(odds_list[i]['odds_value'], (int, float)) else str(odds_list[i]['odds_value']))
+                    #                 if i + 1 < len(odds_list):
+                    #                     with cols_ou[1]:
+                    #                         st.metric(label=odds_list[i+1]['display_label'], 
+                    #                                     value=f"{odds_list[i+1]['odds_value']:.2f}" if isinstance(odds_list[i+1]['odds_value'], (int, float)) else str(odds_list[i+1]['odds_value']))
+                    #                 else: # Handle odd number of items if any (shouldn't happen for O/U)
+                    #                     with cols_ou[1]: st.empty()
+
+                    ou_market_categories = {
+                        "Goals": ["Goals Over/Under", "Total - Home", "Total - Away" ],
+                        "Corners": ["Corners Over Under" ],
+                        "Cards": ["Cards Over/Under"],
+                        "First Half": ["Goals Over/Under First Half", "Home Team Total Goals(1st Half)", "Away Team Total Goals(1st Half)","Total Corners (1st Half)"],
+                        "Second Half": ["Goals Over/Under Second Half","Home Team Total Goals(2nd Half)", "Away Team Total Goals(2nd Half)","Total Corners (2nd Half)"]
+                    }
+
+                    for category_title, markets_in_category in ou_market_categories.items():
+                        # Check if any market in this category has data to display
+                        category_has_any_data = any(m_key in odds_by_market and odds_by_market[m_key] for m_key in markets_in_category)
+
+                        if category_has_any_data:
+                            with st.expander(f"{category_title} Over/Under Lines", expanded=False):
+                                for market_name in markets_in_category:
+                                    if market_name in odds_by_market and odds_by_market[market_name]:
+                                        odds_list = odds_by_market[market_name]
+                                        
+                                        # Display market sub-title if it's not redundant with category
+                                        # e.g., if category is "Goals", and market is "Total - Home"
+                                        if category_title.lower() not in market_name.lower():
+                                            st.markdown(f"**{market_name.replace('Over/Under', '').replace('Over Under', '').strip()}**")
+                                        # else if only one market in category, no need for sub-title if same as category
+                                        elif len(markets_in_category) > 1:
+                                            st.markdown(f"**{market_name.replace('Over/Under', '').replace('Over Under', '').strip()}**")
+
+
+                                        # Table Header for O/U: Line | Over | Under
+                                        header_cols = st.columns([1, 1, 1]) 
+                                        with header_cols[0]:
+                                            st.markdown("<div class='ou-header-label'>Line</div>", unsafe_allow_html=True)
+                                        with header_cols[1]:
+                                            st.markdown("<div class='ou-header-label'>Over</div>", unsafe_allow_html=True)
+                                        with header_cols[2]:
+                                            st.markdown("<div class='ou-header-label'>Under</div>", unsafe_allow_html=True)
+
+                                        # Table Rows
+                                        for i in range(0, len(odds_list), 2): 
+                                            if i + 1 < len(odds_list):
+                                                over_item = odds_list[i]
+                                                under_item = odds_list[i+1]
+
+                                                line_match_over = re.search(r'(\d+(?:\.\d+)?)', over_item['bet_label'])
+                                                line_match_under = re.search(r'(\d+(?:\.\d+)?)', under_item['bet_label'])
+
+                                                if line_match_over and line_match_under and line_match_over.group(1) == line_match_under.group(1):
+                                                    line_display = line_match_over.group(1)
+                                                    row_cols = st.columns([1, 1, 1])
+                                                    with row_cols[0]:
+                                                        st.markdown(f"<div class='odds-table-cell-label'>{line_display}</div>", unsafe_allow_html=True)
+                                                    with row_cols[1]:
+                                                        over_odds_val = f"{over_item['odds_value']:.2f}" if isinstance(over_item['odds_value'], (int, float)) else str(over_item['odds_value'])
+                                                        st.markdown(f"<div class='odds-table-cell-value'>{over_odds_val}</div>", unsafe_allow_html=True)
+                                                    with row_cols[2]:
+                                                        under_odds_val = f"{under_item['odds_value']:.2f}" if isinstance(under_item['odds_value'], (int, float)) else str(under_item['odds_value'])
+                                                        st.markdown(f"<div class='odds-table-cell-value'>{under_odds_val}</div>", unsafe_allow_html=True)
+                                                else:
+                                                    st.caption(f"Data format/pairing issue: {over_item['bet_label']} / {under_item.get('bet_label', 'N/A')}")
+                                            else: 
+                                                st.caption(f"Orphaned O/U item: {odds_list[i]['bet_label']} - {odds_list[i]['odds_value']}")
+                                        st.markdown("<hr style='margin-top:10px; margin-bottom:10px;'>", unsafe_allow_html=True) # Separator after each specific O/U market table
+
+                    # Fallback for any markets not covered by compact_table_markets or ou_market_categories
+                    # You can add a default display here if needed, e.g., using st.metric inside an expander
+                    # st.markdown("---")
+                    # st.markdown("##### Other Markets")
+                    # for market_name, odds_list in odds_by_market.items():
+                    #     is_compact = market_name in compact_table_markets
+                    #     is_ou_category_market = any(market_name in cat_list for cat_list in ou_market_categories.values())
+                    #     if not is_compact and not is_ou_category_market:
+                    #         with st.expander(f"{market_name} (Other)", expanded=False):
+                    #             if not odds_list: st.caption("No odds."); continue
+                    #             for odd_item in odds_list:
+                    #                 st.metric(label=odd_item['display_label'], value=str(odd_item['odds_value']))
     # Performance Tab
     with tabs[1]:
         st.markdown("#### Performance & Form - Last 5 Games")
@@ -3242,7 +3774,6 @@ else:
             st.markdown("**Over 4.5 Cards:**")
             st.markdown(create_colored_progress_bar(Last5AwayOver4YellowCards, text_label="O4.5"), unsafe_allow_html=True)
 
-
     # H2H Tab
     def display_h2h_stats(metric_label, h2h_val,team_overall_avg,league_avg_context,team,inverse_flag):
         # h2h_val = float(selected_match_data.get('h2h_home_shots_against_avg', 0.0)) # Shots conceded by Home in H2H
@@ -3524,3 +4055,50 @@ else:
                     st.markdown(f"**{insight['label']}:** {insight['value']}")
                 else: 
                     st.caption(f"{insight['label']} (No data)")
+
+    # with tabs[4]:
+        # st.markdown(f"### 🎲 Odds for {selected_match_data.get('HomeTeam', '')} vs {selected_match_data.get('AwayTeam', '')}")
+
+        # if not selected_match_data:
+        #     st.info("Select a match to view odds.")
+        # else:
+        #     # Group the odds from selected_match_data
+        #     odds_by_market = group_odds_by_market(selected_match_data)
+
+        #     if not odds_by_market:
+        #         st.info("No odds data available for this match.")
+        #     else:
+        #         for market_name, odds_list in odds_by_market.items():
+        #             with st.expander(f"{market_name}", expanded=False): # Start collapsed
+        #                 # Determine number of columns based on odds_list length for that market
+        #                 # Max 3 columns for readability, or fewer if fewer items
+        #                 num_items = len(odds_list)
+        #                 if num_items == 0:
+        #                     st.caption("No odds for this market.")
+        #                     continue
+                        
+        #                 cols = st.columns(min(num_items, 3)) 
+        #                 col_idx = 0
+        #                 for odd_item in odds_list:
+        #                     with cols[col_idx % len(cols)]:
+        #                         bet_label = odd_item['bet_label']
+        #                         odds_val = odd_item['odds_value']
+                                
+        #                         # For Over/Under, try to make label more concise if it's long
+        #                         if "Over/Under" in market_name or "Over Under" in market_name:
+        #                             # 'bet_label' is already 'Over X.X' or 'Under X.X'
+        #                             display_label = bet_label 
+        #                         elif market_name == "Total - Home" or market_name == "Total - Away":
+        #                             display_label = bet_label # e.g. "Over 0.5"
+        #                         else:
+        #                             display_label = bet_label
+
+        #                         # Display using st.metric or st.text_input (as placeholder)
+        #                         if isinstance(odds_val, (int, float)):
+        #                             st.metric(label=display_label, value=f"{odds_val:.2f}")
+        #                         else: # For "N/A" or other non-numeric
+        #                             st.metric(label=display_label, value=str(odds_val)) 
+                                
+        #                         # If you want to use text_input as a placeholder for future editing:
+        #                         # st.text_input(label=display_label, value=str(odds_val), key=odd_item['original_field'], disabled=True)
+        #                     col_idx += 1
