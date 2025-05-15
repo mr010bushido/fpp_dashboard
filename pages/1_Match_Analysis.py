@@ -1406,16 +1406,100 @@ if current_day_selection not in date_filter_options:
 st.sidebar.selectbox("Date:", options=date_filter_options, key='day_filter') # Use session state key 
 
 # Country and League filters (Keep "All" option)
-filter_countries = ["All"]
-if not weekly_df.empty and 'country' in weekly_df.columns:
-    filter_countries = ["All"] + sorted(weekly_df['country'].dropna().unique())
-st.sidebar.selectbox("Country:", options=filter_countries, key='country_filter')
+# filter_countries = ["All"]
+# if not weekly_df.empty and 'country' in weekly_df.columns:
+#     filter_countries = ["All"] + sorted(weekly_df['country'].dropna().unique())
+# st.sidebar.selectbox("Country:", options=filter_countries, index=default_country_index, key='country_filter')
 
-# Example: League Filter
-filter_leagues = ["All"]
-if not weekly_df.empty and 'league_name' in weekly_df.columns:
-    filter_leagues = ["All"] + sorted(weekly_df['league_name'].dropna().unique())
-st.sidebar.selectbox("League:", options=filter_leagues, key='league_filter')
+# # Example: League Filter
+# filter_leagues = ["All"]
+# if not weekly_df.empty and 'league_name' in weekly_df.columns:
+#     filter_leagues = ["All"] + sorted(weekly_df['league_name'].dropna().unique())
+# st.sidebar.selectbox("League:", options=filter_leagues, key='league_filter')
+
+filter_countries_options = ["All"]
+if not weekly_df.empty and 'country' in weekly_df.columns:
+    unique_countries = sorted(weekly_df['country'].dropna().unique())
+    filter_countries_options.extend(unique_countries)
+    
+# Determine default index for country, ensuring "All" is an option
+default_country_index = 0
+if st.session_state.country_filter in filter_countries_options:
+    default_country_index = filter_countries_options.index(st.session_state.country_filter)
+else: # If persisted state is somehow invalid, default to "All"
+    st.session_state.country_filter = "All"
+
+def country_changed():
+    # When country changes, reset the selected league to "All" for that country
+    # and update the available league options.
+    # The actual selected_country is already in st.session_state.country_filter_cascade
+    # This function primarily handles the side effects of that change.
+    st.session_state.league_filter = "All" # Reset league selection
+
+# Store the selected country in its own session state variable for clarity and direct use
+# The selectbox widget itself will also store its value under its key ('country_filter_cascade')
+selected_country_value = st.sidebar.selectbox(
+    "Country:", 
+    options=filter_countries_options, 
+    index=default_country_index, 
+    key='country_filter_cascade', # Use a unique key for this specific selectbox
+    on_change=country_changed # Callback to reset league when country changes
+)
+
+# Update our specific session state variable if it differs from the widget's state
+# This helps ensure our logic uses the most up-to-date value consistently.
+if st.session_state.country_filter != selected_country_value:
+    st.session_state.country_filter = selected_country_value
+    # No need to call country_changed() here again if on_change is used,
+    # but if on_change is not used, you'd put the reset logic here.
+
+# --- League Filter (Dynamically Populated) ---
+leagues_for_selected_country = ["All"] # Default if no country or "All" countries selected
+
+if st.session_state.country_filter != "All":
+    # Filter weekly_df for the selected country
+    country_specific_df = weekly_df[weekly_df['country'] == st.session_state.country_filter]
+    if not country_specific_df.empty and 'league_name' in country_specific_df.columns:
+        unique_leagues_in_country = sorted(country_specific_df['league_name'].dropna().unique())
+        leagues_for_selected_country.extend(unique_leagues_in_country)
+elif not weekly_df.empty and 'league_name' in weekly_df.columns: # If "All" countries is selected
+    # Show all unique leagues from the entire DataFrame
+    all_unique_leagues = sorted(weekly_df['league_name'].dropna().unique())
+    leagues_for_selected_country.extend(all_unique_leagues)
+
+
+# Determine default index for league
+default_league_index = 0
+# If the previously selected league is still in the new list of options, keep it.
+# Otherwise, default to "All".
+if st.session_state.league_filter in leagues_for_selected_country:
+    default_league_index = leagues_for_selected_country.index(st.session_state.league_filter)
+else:
+    st.session_state.league_filter = "All" # Reset to "All" if previous selection invalid
+
+selected_league_value = st.sidebar.selectbox(
+    "League:", 
+    options=leagues_for_selected_country, 
+    index=default_league_index,
+    key='league_filter_cascade' # Use a unique key
+)
+
+# Update our specific session state variable for league if it differs
+if st.session_state.league_filter != selected_league_value:
+    st.session_state.league_filter = selected_league_value
+
+
+# --- Apply Filters to your DataFrame for Display/Processing ---
+filtered_display_df = weekly_df.copy()
+
+# Apply country filter
+if st.session_state.country_filter != "All":
+    filtered_display_df = filtered_display_df[filtered_display_df['country'] == st.session_state.country_filter]
+
+# Apply league filter
+if st.session_state.league_filter != "All":
+    filtered_display_df = filtered_display_df[filtered_display_df['league_name'] == st.session_state.league_filter]
+
 
 # Extract Recommended Bet options
 rec_bet_options = ["All"]
