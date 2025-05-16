@@ -3,6 +3,12 @@ import pandas as pd
 import glob # For finding weekly files
 import os
 
+st.set_page_config(
+    page_title="Results Analysis", # You can have a page-specific title
+    page_icon="⚽",  # <<< USE THE SAME ICON HERE
+    layout="wide" # Or whatever layout you prefer for this page
+)
+
 # --- Configuration ---
 COMBINED_RESULTS_FILE = "path/to/combined_results.csv"
 
