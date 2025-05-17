@@ -298,6 +298,10 @@ FLAG_BASE_URL = "https://fpp-dashboard-media.b-cdn.net/flags/"#media.api-sports.
 
 MESSAGE_TIMEOUT_SECONDS = 7 # How long messages should persist (in seconds)
 
+# --- Define Default Values for New Filters (use these in reset) ---
+DEFAULT_TIME_RANGE = (0, 23)
+DEFAULT_RANK_RANGE = (1, 50) # A sensible wide default for ranks
+DEFAULT_ODDS_RANGE = (1.01, 25.0) # A sensible wide default for odds
 # --- Session State Initialization ---
 # Ensure the message list exists in session state
 if 'transient_messages' not in st.session_state:
@@ -935,6 +939,13 @@ def handle_week_change():
     st.session_state.confidence_filter = st.session_state.get('global_default_confidence_range', (0, 10)) # Use a fixed default here
     # st.session_state.confidence_filter = st.session_state.get('default_confidence_range', (0, 10))
     # Crucially, also clear the selected match ID when the week changes
+    
+    # NEW FILTERS - Reset to their "All Inclusive" states
+    st.session_state.time_range_filter = DEFAULT_TIME_RANGE
+    st.session_state.home_rank_range_filter = DEFAULT_RANK_RANGE 
+    st.session_state.away_rank_range_filter = DEFAULT_RANK_RANGE
+    st.session_state.value_bet_odds_range_filter = DEFAULT_ODDS_RANGE
+    
     if 'selected_match_id' in st.session_state:
         st.session_state.selected_match_id = None
 
@@ -1462,6 +1473,12 @@ if 'confidence_filter' not in st.session_state:
     st.session_state.global_default_confidence_range = (0, 10) # Initial default range
 if 'include_no_score' not in st.session_state:
     st.session_state.include_no_score = True # Default to including matches without scores
+min_hour = 0
+max_hour = 23
+
+# Initialize session state for time range if it doesn't exist
+if 'time_range_filter' not in st.session_state:
+    st.session_state.time_range_filter = (min_hour, max_hour) # Default to full day
 
 # --- Load Data Based on Configuration ---
 # all_matches_raw = []
@@ -1594,17 +1611,37 @@ if current_day_selection not in date_filter_options:
 
 st.sidebar.selectbox("Date:", options=date_filter_options, key='day_filter') # Use session state key 
 
-# Country and League filters (Keep "All" option)
-# filter_countries = ["All"]
-# if not weekly_df.empty and 'country' in weekly_df.columns:
-#     filter_countries = ["All"] + sorted(weekly_df['country'].dropna().unique())
-# st.sidebar.selectbox("Country:", options=filter_countries, index=default_country_index, key='country_filter')
+# Attempt to create it if 'Time' column exists
+if 'time' in weekly_df.columns:
+    def get_hour(time_val):
+        if pd.isna(time_val): 
+            return -1
+        if isinstance(time_val, str) and ':' in time_val:
+            try: 
+                return int(time_val.split(':')[0])
+            except ValueError: 
+                return -1
+        elif isinstance(time_val, time): # datetime.time object
+            return time_val.hour
+        return -1
+    
+    weekly_df['Hour'] = weekly_df['time'].apply(get_hour)
+else:
+    weekly_df['Hour'] = -1 # Default if no Time column
+    st.sidebar.warning("Time column not found for hourly filter.")
 
-# # Example: League Filter
-# filter_leagues = ["All"]
-# if not weekly_df.empty and 'league_name' in weekly_df.columns:
-#     filter_leagues = ["All"] + sorted(weekly_df['league_name'].dropna().unique())
-# st.sidebar.selectbox("League:", options=filter_leagues, key='league_filter')
+
+selected_time_range = st.sidebar.slider(
+    "Match Time (Hour of Day):",
+    min_value=min_hour,
+    max_value=max_hour,
+    value=st.session_state.time_range_filter, # Use value from session state
+    step=1,
+    key='time_slider'
+)
+# Update session state when slider changes
+if selected_time_range != st.session_state.time_range_filter:
+    st.session_state.time_range_filter = selected_time_range
 
 filter_countries_options = ["All"]
 if not weekly_df.empty and 'country' in weekly_df.columns:
@@ -1678,6 +1715,7 @@ if st.session_state.league_filter != selected_league_value:
     st.session_state.league_filter = selected_league_value
 
 
+
 # --- Apply Filters to your DataFrame for Display/Processing ---
 filtered_display_df = weekly_df.copy()
 
@@ -1713,6 +1751,65 @@ st.sidebar.multiselect("Value Bet (H/X/A):", options=value_bet_filter_options, k
 # --- Now define other filters based *on the loaded weekly_df* ---
 # Example: Calculate confidence range based on the selected week's data
 
+# --- 3. Value Bet Odds Filter ---
+# st.sidebar.markdown("###### Value Bet Odds:")
+if 'value_bets' in weekly_df.columns: # Assuming this column holds "H(1.80)" or "Market (Odds)"
+    # Function to extract odds from the ValueBet string
+    def extract_odds_from_value_bet(value_bet_str):
+        if pd.isna(value_bet_str) or not isinstance(value_bet_str, str):
+            return None
+        # Look for a number in parentheses, possibly with decimals
+        match = re.search(r'\((\d+(?:\.\d+)?)\)', value_bet_str)
+        if match:
+            try:
+                return float(match.group(1))
+            except ValueError:
+                return None
+        # Fallback for simple odds strings without market if needed
+        try: # if string is just "1.80"
+            return float(value_bet_str)
+        except ValueError:
+            return None
+
+    # Apply this function once to create a new column for efficient filtering
+    if 'ValueBetOddsNumeric' not in weekly_df.columns:
+        weekly_df['ValueBetOddsNumeric'] = weekly_df['value_bets'].apply(extract_odds_from_value_bet)
+
+    # Determine min/max odds from the data for slider range
+    valid_odds = weekly_df['ValueBetOddsNumeric'].dropna()
+    min_odds = float(valid_odds.min()) if not valid_odds.empty else 1.0
+    max_odds = float(valid_odds.max()) if not valid_odds.empty else 5.0
+    # Ensure min_odds is at least 1.01 or similar if that's typical
+    min_odds = max(1.01, min_odds) 
+    max_odds = max(min_odds + 0.1, max_odds) # Ensure max > min
+
+    if 'value_bet_odds_range_filter' not in st.session_state:
+        st.session_state.value_bet_odds_range_filter = (min_odds, max_odds)
+
+    # Ensure the current session state value is within the new dynamic range
+    current_vb_range = st.session_state.value_bet_odds_range_filter
+    valid_vb_range_start = max(min_odds, current_vb_range[0])
+    valid_vb_range_end = min(max_odds, current_vb_range[1])
+    if valid_vb_range_start > valid_vb_range_end : # If range becomes invalid
+        valid_vb_range_start = min_odds
+        valid_vb_range_end = max_odds
+    st.session_state.value_bet_odds_range_filter = (valid_vb_range_start, valid_vb_range_end)
+
+
+    selected_value_bet_odds_range = st.sidebar.slider(
+        "Value Bet Odds:",
+        min_value=min_odds,
+        max_value=max_odds,
+        value=st.session_state.value_bet_odds_range_filter,
+        step=0.01, # For fine control over odds
+        format="%.2f", # Display odds with 2 decimal places
+        key='value_bet_odds_slider'
+    )
+    if selected_value_bet_odds_range != st.session_state.value_bet_odds_range_filter:
+        st.session_state.value_bet_odds_range_filter = selected_value_bet_odds_range
+else:
+    st.sidebar.caption("ValueBet column not found for odds filtering.")
+    
 min_conf = 0
 max_conf = 10 # Default scale
 if not weekly_df.empty and 'confidence_score' in weekly_df.columns:
@@ -1750,6 +1847,93 @@ st.sidebar.checkbox(
 )
 # --- End New Checkbox ---
 
+# --- 2. Rank Filters (Home Rank and Away Rank) ---
+# st.sidebar.markdown("###### Team Rank:")
+def parse_rank_to_int(rank_str):
+    """Converts rank strings like '1st', '2nd', '9th' to integers."""
+    if pd.isna(rank_str) or not isinstance(rank_str, str):
+        return None  # Or a very high number like 99 if you want unranked at the end
+    
+    # Use regex to extract the number part
+    match = re.match(r'(\d+)(?:st|nd|rd|th)?', rank_str.lower())
+    if match:
+        try:
+            return int(match.group(1))
+        except ValueError:
+            return None # Or handle error
+    return None # Or handle error if format i
+
+# --- Pre-process Rank Columns ---
+if 'home_rank' in weekly_df.columns:
+    weekly_df['HomeRankNumeric'] = weekly_df['home_rank'].apply(parse_rank_to_int)
+else:
+    st.warning("HomeRank column not found for rank filtering.")
+    weekly_df['HomeRankNumeric'] = pd.NA # Or some default if you want to proceed
+
+if 'away_rank' in weekly_df.columns:
+    weekly_df['AwayRankNumeric'] = weekly_df['away_rank'].apply(parse_rank_to_int)
+else:
+    st.warning("AwayRank column not found for rank filtering.")
+    weekly_df['AwayRankNumeric'] = pd.NA
+
+# Check if numeric rank columns were successfully created and have valid data
+home_rank_col_exists = 'HomeRankNumeric' in weekly_df.columns and not weekly_df['HomeRankNumeric'].dropna().empty
+away_rank_col_exists = 'AwayRankNumeric' in weekly_df.columns and not weekly_df['AwayRankNumeric'].dropna().empty
+
+if home_rank_col_exists and away_rank_col_exists:
+    min_rank_possible = 1
+    
+    # Determine max rank dynamically from the numeric columns
+    max_rank_home = int(weekly_df['HomeRankNumeric'].dropna().max())
+    max_rank_away = int(weekly_df['AwayRankNumeric'].dropna().max())
+    max_rank_overall = max(max_rank_home, max_rank_away, 20) # Ensure at least 20, or a sensible league max
+
+    # Initialize session state for rank ranges if they don't exist
+    if 'home_rank_range_filter' not in st.session_state:
+        st.session_state.home_rank_range_filter = (min_rank_possible, max_rank_overall)
+    if 'away_rank_range_filter' not in st.session_state:
+        st.session_state.away_rank_range_filter = (min_rank_possible, max_rank_overall)
+
+    # Validate current session state values against dynamic range
+    current_home_rank_range = st.session_state.home_rank_range_filter
+    valid_home_start = max(min_rank_possible, current_home_rank_range[0])
+    valid_home_end = min(max_rank_overall, current_home_rank_range[1])
+    if valid_home_start > valid_home_end: # If range becomes invalid
+        valid_home_start, valid_home_end = min_rank_possible, max_rank_overall
+    st.session_state.home_rank_range_filter = (valid_home_start, valid_home_end)
+    
+    current_away_rank_range = st.session_state.away_rank_range_filter
+    valid_away_start = max(min_rank_possible, current_away_rank_range[0])
+    valid_away_end = min(max_rank_overall, current_away_rank_range[1])
+    if valid_away_start > valid_away_end: # If range becomes invalid
+        valid_away_start, valid_away_end = min_rank_possible, max_rank_overall
+    st.session_state.away_rank_range_filter = (valid_away_start, valid_away_end)
+
+
+    selected_home_rank_range = st.sidebar.slider(
+        "Home Team Rank Range:",
+        min_value=min_rank_possible,
+        max_value=max_rank_overall,
+        value=st.session_state.home_rank_range_filter, # Use validated session state value
+        step=1,
+        key='home_rank_slider'
+    )
+    if selected_home_rank_range != st.session_state.home_rank_range_filter:
+        st.session_state.home_rank_range_filter = selected_home_rank_range
+
+    selected_away_rank_range = st.sidebar.slider(
+        "Away Team Rank Range:",
+        min_value=min_rank_possible,
+        max_value=max_rank_overall,
+        value=st.session_state.away_rank_range_filter, # Use validated session state value
+        step=1,
+        key='away_rank_slider'
+    )
+    if selected_away_rank_range != st.session_state.away_rank_range_filter:
+        st.session_state.away_rank_range_filter = selected_away_rank_range
+else:
+    st.sidebar.caption("Numeric rank data not available or empty for filtering.")
+
 # --- Apply filters ---
 selected_day = st.session_state.day_filter
 selected_country = st.session_state.country_filter
@@ -1758,6 +1942,10 @@ selected_rec_bets = st.session_state.rec_bet_filter
 selected_value_bets = st.session_state.value_bet_filter
 selected_confidence_range = st.session_state.confidence_filter
 include_no_score_flag = st.session_state.include_no_score # Get checkbox state
+selected_time_range = st.session_state.get('time_range_filter', (0, 23)) # Default full day
+selected_home_rank_range = st.session_state.get('home_rank_range_filter', (1, 99)) # Default wide range
+selected_away_rank_range = st.session_state.get('away_rank_range_filter', (1, 99)) # Default wide range
+selected_value_bet_odds_range = st.session_state.get('value_bet_odds_range_filter', (1.0, 10.0)) # Default
 
 # Start with the loaded weekly dataframe
 filtered_df = weekly_df.copy()
@@ -1812,7 +2000,48 @@ if not filtered_df.empty:
     # Apply the final combined mask
     filtered_df = filtered_df[final_conf_mask]
     # --- End Modified Confidence Filter Logic ---
+    # 1. Time Filter
+    if 'Hour' in filtered_df.columns: # Check if 'Hour' helper column exists
+        start_hour, end_hour = selected_time_range
+        # Ensure we only filter if there are valid hour values to compare against
+        # NaNs in 'Hour' column (e.g., from failed parsing) will not satisfy the condition.
+        time_condition = (filtered_df['Hour'] >= start_hour) & (filtered_df['Hour'] <= end_hour)
+        filtered_df = filtered_df[time_condition | filtered_df['Hour'].isna()] # Keep NaNs or filter them out:
+        # If you want to EXCLUDE rows where Hour is NaN (e.g. time couldn't be parsed):
+        # filtered_df = filtered_df[filtered_df['Hour'].notna() & time_condition]
+        # Current logic keeps rows if Hour is NaN. For strict filtering:
+        # filtered_df = filtered_df[filtered_df['Hour'].between(start_hour, end_hour, inclusive='both')]
+    else:
+        # Only warn if the user actually tried to filter by time beyond the default "all day"
+        if selected_time_range != (0, 23): 
+            st.warning("Helper 'Hour' column for time filtering not found.")
+
+    # 2. Rank Filters
+    if 'HomeRankNumeric' in filtered_df.columns and 'AwayRankNumeric' in filtered_df.columns:
+        start_home_rank, end_home_rank = selected_home_rank_range
+        start_away_rank, end_away_rank = selected_away_rank_range
         
+        # Apply conditions, NaNs in numeric rank columns will be excluded by .between()
+        home_rank_condition = filtered_df['HomeRankNumeric'].between(start_home_rank, end_home_rank, inclusive='both')
+        away_rank_condition = filtered_df['AwayRankNumeric'].between(start_away_rank, end_away_rank, inclusive='both')
+        
+        filtered_df = filtered_df[home_rank_condition & away_rank_condition]
+    else:
+        # Only warn if rank filters are not at their widest possible range
+        # This requires knowing the actual max rank from data for default range check.
+        # For simplicity, let's assume if numeric columns aren't there, we just skip.
+        pass # Or st.warning("Numeric rank columns for filtering not found.") if user changed from default
+
+
+    # 3. Value Bet ODDS Filter
+    if 'ValueBetOddsNumeric' in filtered_df.columns:
+        start_vb_odds, end_vb_odds = selected_value_bet_odds_range
+        # .between() will exclude NaNs in ValueBetOddsNumeric
+        odds_condition = filtered_df['ValueBetOddsNumeric'].between(start_vb_odds, end_vb_odds, inclusive='both')
+        filtered_df = filtered_df[odds_condition]
+    else:
+        # Only warn if odds filter is not at its widest possible range
+        pass # Or st.warning("Numeric value bet odds column for 
     # st.sidebar.metric("Rows After Filtering (filtered_df)", filtered_df.shape[0] if not filtered_df.empty else 0)        
 # --- Main Page Content ---
 
@@ -2059,6 +2288,11 @@ else:
     # Display Dashboard
     st.sidebar.divider()
     st.sidebar.button("⬅️ Back to Overview", on_click=clear_selected_match)
+    overview_header_cols = st.columns(2)
+    with overview_header_cols[0]:
+        st.write("") # Placeholder instead of header, already have subheader
+    with overview_header_cols[1]:
+        st.button("⬅️ Back to Overview", on_click=clear_selected_match, use_container_width=True) # 
 
     # st.text(f"📅 {selected_match_data.get('date','--')} 🕛 {selected_match_data.get('time','--')}")
     # st.text(f"🌍 {selected_match_data.get('country','--')} - {selected_match_data.get('league_name','--')}")
