@@ -931,6 +931,7 @@ def handle_week_change():
     st.session_state.country_filter = "All"
     st.session_state.league_filter = "All"
     st.session_state.rec_bet_filter = ["All"]
+    st.session_state.select_all_rec_bets_cb = False
     # Value Bet options are static, no need to reset typically
     st.session_state.value_bet_filter = ["All"]
     # Reset confidence based on a fixed default or stored overall default
@@ -1466,6 +1467,11 @@ if 'league_filter' not in st.session_state:
     st.session_state.league_filter = "All"
 if 'rec_bet_filter' not in st.session_state:
     st.session_state.rec_bet_filter = "All"
+if 'select_all_rec_bets_cb' not in st.session_state:
+    # This will store the state of the "Select All" checkbox.
+    # Initialize based on whether rec_bet_filter initially includes all options or is just ["All"]
+    st.session_state.select_all_rec_bets_cb = ("All" in st.session_state.rec_bet_filter and len(st.session_state.rec_bet_filter) == 1) or \
+    (len(st.session_state.rec_bet_filter) > 1 and "All" not in st.session_state.rec_bet_filter)
 if 'value_bet_filter' not in st.session_state:
     st.session_state.value_bet_filter = "All"
 if 'confidence_filter' not in st.session_state:
@@ -1745,6 +1751,78 @@ if not is_rec_bet_valid:
 # Now create the widget
 st.sidebar.multiselect("Recommended Bet:", options=rec_bet_options, key='rec_bet_filter')
 
+all_rec_bet_options_for_multiselect = []
+if not weekly_df.empty and 'rec_prediction' in weekly_df.columns:
+    # Get unique, non-null prediction types
+    all_possible_rec_bets = sorted(weekly_df['rec_prediction'].dropna().unique())
+    all_rec_bet_options_for_multiselect = all_possible_rec_bets
+else:
+    st.sidebar.caption("No recommended bets found in data.")
+
+# st.sidebar.markdown("###### Recommended Bet Type:")
+
+# --- "Select All" Checkbox Logic ---
+# This function will be called when the checkbox state changes
+def toggle_all_rec_bets():
+    if st.session_state.select_all_rec_bets_cb: # If checkbox is now True (checked)
+        # If actual options are available, select them all
+        if all_rec_bet_options_for_multiselect:
+            st.session_state.rec_bet_filter = all_rec_bet_options_for_multiselect.copy() # Select all actual options
+        else: # No options to select, so default to "All" signifying no filter
+            st.session_state.rec_bet_filter = ["All"]
+        st.session_state.select_all_rec_bets_cb = True # Sync internal state
+    else: # If checkbox is now False (unchecked)
+        st.session_state.rec_bet_filter = ["All"] # Default to "All" (meaning no specific filter)
+        st.session_state.select_all_rec_bets_cb = False # Sync internal state
+
+# Display the checkbox
+# The key for the checkbox widget itself should be different from the session_state variable
+# that holds its logical state, to avoid conflicts during reruns.
+st.sidebar.checkbox(
+    "Toggle All Recommended Bets",
+    value=st.session_state.select_all_rec_bets_cb, # Controlled by our internal state variable
+    key='select_all_rec_bets_cb', # Widget key
+    on_change=toggle_all_rec_bets,
+    disabled=not all_rec_bet_options_for_multiselect # Disable if no actual bets to select
+)
+
+
+# --- Recommended Bets Multiselect ---
+# The options for multiselect should NOT include "All" if we have a separate checkbox for it.
+# If all_rec_bet_options_for_multiselect is empty, provide a placeholder.
+multiselect_options = all_rec_bet_options_for_multiselect if all_rec_bet_options_for_multiselect else ["No specific bets available"]
+
+# The default value for the multiselect should be what's in st.session_state.rec_bet_filter,
+# BUT if "All" is in rec_bet_filter (meaning no specific filter), multiselect should show nothing selected.
+current_multiselect_selection = [bet for bet in st.session_state.rec_bet_filter if bet != "All"]
+
+
+def rec_bet_multiselect_changed():
+    # When multiselect changes, update the main session state for the filter
+    # And also update the "Select All" checkbox state accordingly
+    selected_options = st.session_state.rec_bet_multiselect_widget # Get value from widget
+    
+    if not selected_options: # If user deselects everything in multiselect
+        st.session_state.rec_bet_filter = ["All"]
+        st.session_state.select_all_rec_bets_cb = False
+    else:
+        st.session_state.rec_bet_filter = selected_options
+        # Check if all available options are selected
+        if all_rec_bet_options_for_multiselect and \
+            set(selected_options) == set(all_rec_bet_options_for_multiselect):
+            st.session_state.select_all_rec_bets_cb = True
+        else:
+            st.session_state.select_all_rec_bets_cb = False
+
+# selected_rec_bets_from_multiselect = st.sidebar.multiselect(
+#     "Filter by Recommended Bet:",
+#     options=multiselect_options,
+#     default=current_multiselect_selection, # What's actually selected (excluding "All")
+#     key='rec_bet_multiselect_widget', # Widget key
+#     on_change=rec_bet_multiselect_changed,
+#     disabled=not all_rec_bet_options_for_multiselect # Disable if no options
+# )
+
 # Value Bet Filter (Hardcoded options H/X/A)
 value_bet_filter_options = ["All", "H", "X", "A"]
 st.sidebar.multiselect("Value Bet (H/X/A):", options=value_bet_filter_options, key='value_bet_filter')
@@ -1960,9 +2038,14 @@ if not filtered_df.empty:
         filtered_df = filtered_df[filtered_df['country'] == selected_country]
     if selected_league != "All":
         filtered_df = filtered_df[filtered_df['league_name'] == selected_league]
-    if "All" not in selected_rec_bets:
-        filtered_df = filtered_df[filtered_df['rec_prediction'].isin(selected_rec_bets)]
-
+    # if "All" not in selected_rec_bets:
+    #     filtered_df = filtered_df[filtered_df['rec_prediction'].isin(selected_rec_bets)]
+    if 'rec_prediction' in filtered_df.columns:
+        if "All" not in st.session_state.rec_bet_filter: # If specific bets are selected
+            filtered_df = filtered_df[filtered_df['rec_prediction'].isin(st.session_state.rec_bet_filter)]
+    else:
+        if "All" not in st.session_state.rec_bet_filter: # If specific bets selected but column missing
+            st.warning("rec_prediction column for filtering not found.")
     # --- !!! MODIFIED Value Bet Filter Logic !!! ---
     if "All" not in selected_value_bets:
         # Create a boolean mask based on the first character check
@@ -2288,7 +2371,7 @@ else:
     # Display Dashboard
     st.sidebar.divider()
     st.sidebar.button("⬅️ Back to Overview", on_click=clear_selected_match)
-    overview_header_cols = st.columns(2)
+    overview_header_cols = st.columns([3, 1])
     with overview_header_cols[0]:
         st.write("") # Placeholder instead of header, already have subheader
     with overview_header_cols[1]:
@@ -3078,7 +3161,7 @@ else:
         ppg_a_all = selected_match_data.get('ppg_a_all')
 
         with home_perf_col1:
-            st.markdown(f"**{selected_match_data.get('home_team','?')} (Home)**")
+            st.markdown(f"**{selected_match_data.get('home_team','?')} (Last 5 Home Games)**")
             form_home = colorize_performance(selected_match_data.get('form_home', '--'))#.split('//')r
             all_form_home = colorize_performance(selected_match_data.get('all_form_home', '--'))#.split('//')
             # if len(all_form_home) > 1:
@@ -3136,7 +3219,7 @@ else:
             # win_cols_h[1].metric("Total Reds",Last5HomeAvergeTotalRedCards,f"{round(l5hometotalreds_delta,2)} league avg.")
 
         with away_perf_col2:
-            st.markdown(f"**{selected_match_data.get('away_team','?')} (Away)**")
+            st.markdown(f"**{selected_match_data.get('away_team','?')} (Last 5 Away Games)**")
             form_away = colorize_performance(selected_match_data.get('form_away', '--'))#.split('//')r
             all_form_away = colorize_performance(selected_match_data.get('all_form_away', '--'))#.split('//')
             # if len(all_form_away) > 1:
@@ -3264,6 +3347,7 @@ else:
                 st.caption(f"Could not plot goal averages: {e}")
                 if isinstance(e, ImportError):
                     st.warning("Please install altair: pip install altair")
+        
         with goal_stats_cols[1]:
             # --- NEW: Actual vs Expected Goals (xG) Visualization ---
             st.markdown("#### xG Statistics")
@@ -3468,7 +3552,7 @@ else:
                 df = pd.DataFrame({
                     'Game': game_labels,
                     'Cards Received by Team': card_values[:actual_num_games],
-                    'Fouls Committed by Team': foul_values[:actual_num_games]
+                    'Cards Given by Referee': foul_values[:actual_num_games]
                 })
                 return df
             except (ValueError, TypeError):
@@ -3499,31 +3583,31 @@ else:
             )
 
             line_fouls = base.mark_line(point=alt.OverlayMarkDef(color=foul_color, size=50), strokeWidth=2.5, color=foul_color).encode(
-                y=alt.Y('Fouls Committed by Team:Q', axis=alt.Axis(tickMinStep=1)), # Uses the same y-axis
+                y=alt.Y('Cards Given by Referee:Q', axis=alt.Axis(tickMinStep=1)), # Uses the same y-axis
                 tooltip=[
                     alt.Tooltip('Game:N'),
-                    alt.Tooltip('Fouls Committed by Team:Q', title='Team Fouls')
+                    alt.Tooltip('Cards Given by Referee:Q', title='Referee Cards')
                 ]
             )
             
             # Horizontal rule for Referee's Average Total Cards in their games
             # Only add if the value is valid
-            layers = [bar_cards]#, line_fouls]
+            layers = [bar_cards, line_fouls]#
             if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >= 0:
                 ref_avg_rule = alt.Chart(pd.DataFrame({'ref_avg_total': [referee_avg_total_cards_game]})).mark_rule(
                     strokeDash=[6,4], strokeWidth=2, color=ref_line_color, opacity=0.9
                 ).encode(
                     y='ref_avg_total:Q'
                     # Tooltip for rule can be tricky, better to use caption
-                )
+                ) 
                 layers.append(ref_avg_rule)
 
             # Determine Y-axis domain dynamically to include all data + ref line
             max_cards = df_team_discipline['Cards Received by Team'].max() if not df_team_discipline.empty else 0
-            max_fouls = df_team_discipline['Fouls Committed by Team'].max() if not df_team_discipline.empty else 0
+            max_fouls = df_team_discipline['Cards Given by Referee'].max() if not df_team_discipline.empty else 0
             y_max = max(max_cards, max_fouls)
             if pd.notna(referee_avg_total_cards_game) and referee_avg_total_cards_game >=0:
-                y_max = max(max_cards, referee_avg_total_cards_game)#y_max
+                y_max = max(y_max, referee_avg_total_cards_game)#max_cards
             
             y_domain = [0, y_max + 2] # Add some padding
 
@@ -3645,6 +3729,11 @@ else:
 
         ref_avg_total_cards = selected_match_data.get('RefLast5AvgTotalCards')
 
+        ref_home_card_spread = selected_match_data.get('RefLast5HomeTeamCards')# if   selected_match_data.get('RefLast5HomeTeamCards') == 0  else "0,0,0,0,0"
+        ref_away_card_spread = selected_match_data.get('RefLast5AwayTeamCards')# if   selected_match_data.get('RefLast5AwayTeamCards') == 0  else "0,0,0,0,0"
+        st.info(ref_home_card_spread)
+        st.info(ref_away_card_spread)
+
         col_home_disc, col_away_disc = st.columns(2)
         # 'RefSeasonAvgTotalCards','RefSeasonAvgHomeTeamCards','RefSeasonAvgAwayTeamCards',
         # 'RefLast5AvgTotalCards','RefLast5AvgHomeTeamCards','RefLast5AvgAwayTeamCards',
@@ -3681,8 +3770,9 @@ else:
             # Chart
             df_home_disc_data = prepare_discipline_data(
                 selected_match_data.get('l5_home_cards_for'),
-                selected_match_data.get('l5_home_fouls_for')
-            )
+                # selected_match_data.get('l5_home_fouls_for')
+                ref_home_card_spread
+            ) #
             # Assuming you have a field for referee's average total cards in their games
             # ref_avg_total_cards = selected_match_data.get('RefSeasonTotalCardsAvg') # Or RefLast5TotalCardsAvg
             
@@ -3700,7 +3790,6 @@ else:
             #     chart_title=f"{home_team} Actual vs. Expected Cards"
             # )
             st.caption(f"Bars: Cards Received by {home_team}. Line: Fouls Committed by {home_team}.")
-
 
         # AWAY TEAM DISCIPLINE SECTION (similar structure)
         with col_away_disc:
@@ -3730,8 +3819,9 @@ else:
             # Chart
             df_away_disc_data = prepare_discipline_data(
                 selected_match_data.get('l5_away_cards_for'),
-                selected_match_data.get('l5_away_fouls_for')
-            )
+                # selected_match_data.get('l5_away_fouls_for')
+                ref_away_card_spread
+            ) #
             # ref_avg_total_cards is the same for the match
             
             create_layered_discipline_chart(
@@ -3758,7 +3848,8 @@ else:
             h_halves_text = selected_match_data.get('halves_o05_h', '')
             h1_pct = selected_match_data.get('1h_o05_h', '')*100  # parse_specific_percent(h_halves_text, '1H', 0)
             h2_pct = selected_match_data.get('2h_o05_h', '')*100  # parse_specific_percent(h_halves_text, '2H', 0)
-            st.markdown(f"##### {selected_match_data.get('home_team','Home')}")#(H): 1H={h1_pct}% | 2H={h2_pct}%
+            
+            st.markdown(f"##### {selected_match_data.get('home_team','Home')} (Last 5 Home Games)")#(H): 1H={h1_pct}% | 2H={h2_pct}%
 
             st.markdown("**Halves > 0.5 Goals %**")
             # st.progress(h1_pct / 100.0, text=f"1H {h1_pct}%")
@@ -3799,7 +3890,8 @@ else:
             a_match_goals_text = selected_match_data.get('match_goals_a', '')
             o15_a_pct = selected_match_data.get('1h_o05_a', '')*100#parse_specific_percent(a_match_goals_text, 'O1.5', 0)
             o25_a_pct = selected_match_data.get('2h_o05_a', '')*100#parse_specific_percent(a_match_goals_text, 'O2.5', 0)
-            st.markdown(f"##### {selected_match_data.get('away_team','Away')}") # (A): O1.5={o15_a_pct}% | O2.5={o25_a_pct}%
+            
+            st.markdown(f"##### {selected_match_data.get('away_team','Away')} (Last 5 Away Games)") # (A): O1.5={o15_a_pct}% | O2.5={o25_a_pct}%
             st.markdown("**Halves > 0.5 Goals %**")
             # st.progress(o15_a_pct / 100.0, text=f"O1.5 {o15_a_pct}%")
             # st.progress(o25_a_pct / 100.0, text=f"O2.5 {o25_a_pct}%")
@@ -3836,7 +3928,7 @@ else:
 
         with stats_cols[2]:
             st.markdown("#### Corners and Cards")
-            st.markdown(f"##### {selected_match_data.get('home_team','Home')}") 
+            st.markdown(f"##### {selected_match_data.get('home_team','Home')} (Last 5 Home Games)") 
             st.markdown("**Corners (O/U)**")
 
             st.markdown("**Over 7.5 Corners:**")
@@ -3863,7 +3955,7 @@ else:
 
         with stats_cols[3]:
             st.markdown("#### ")
-            st.markdown(f"##### {selected_match_data.get('away_team','Away')}")
+            st.markdown(f"##### {selected_match_data.get('away_team','Away')} (Last 5 Away Games)")
             st.markdown("**Corners (O/U)**")
 
             st.markdown("**Over 7.5 Corners:**")
