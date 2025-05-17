@@ -3542,6 +3542,13 @@ else:
             # ... (same as before) ...
             if not card_spread_str or not foul_spread_str:
                 return pd.DataFrame() 
+            
+            default_spread = "0,0,0,0,0" # Default to all zeros for the specified length
+
+            # Explicitly check if the string is just "0"
+            if foul_spread_str.strip() == "0" or foul_spread_str.strip() == 0:
+                # print(f"Debug: Spread string is '0'. Defaulting to five zeros.")
+                foul_spread_str= default_spread
             try:
                 card_values = [int(x) for x in card_spread_str.split(',')]
                 foul_values = [int(x) for x in foul_spread_str.split(',')]
@@ -3729,10 +3736,10 @@ else:
 
         ref_avg_total_cards = selected_match_data.get('RefLast5AvgTotalCards')
 
-        ref_home_card_spread = selected_match_data.get('RefLast5HomeTeamCards')# if   selected_match_data.get('RefLast5HomeTeamCards') == 0  else "0,0,0,0,0"
-        ref_away_card_spread = selected_match_data.get('RefLast5AwayTeamCards')# if   selected_match_data.get('RefLast5AwayTeamCards') == 0  else "0,0,0,0,0"
-        st.info(ref_home_card_spread)
-        st.info(ref_away_card_spread)
+        ref_home_card_spread = selected_match_data.get('RefLast5HomeTeamCards')
+        ref_away_card_spread = selected_match_data.get('RefLast5AwayTeamCards')
+        # st.info(ref_home_card_spread)
+        # st.info(ref_away_card_spread)
 
         col_home_disc, col_away_disc = st.columns(2)
         # 'RefSeasonAvgTotalCards','RefSeasonAvgHomeTeamCards','RefSeasonAvgAwayTeamCards',
