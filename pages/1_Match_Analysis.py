@@ -3172,7 +3172,7 @@ if not selected_match_data:
                             if rec_pred:
                                 pred_display = f"<span style='font-weight:bold;text-decoration: overline;'>Best Bet: {rec_pred_only}{confidence_text}</span>"
                                 if rec_pred_won == "WIN":
-                                    pred_display = f"<span style='color:green; font-weight:bold;text-decoration: overline;'>Best Bet: {rec_pred}{confidence_text} ✅</span>"  # Added checkmark
+                                    pred_display = f"<span style='font-weight:bold;text-decoration: overline;'>Best Bet: </span><span style='color:green; font-weight:bold;text-decoration: overline;'>{rec_pred}{confidence_text} ✅</span>"  # Added checkmark
                                     st.caption(
                                         f"{pred_display}",
                                         unsafe_allow_html=True,
