@@ -1006,7 +1006,7 @@ def load_data_from_csv(filepath) -> pd.DataFrame:
             "HeadToHeadAwayXG",
             "h2h_hva_o1_5",
             "h2h_hva_o2_5",
-            "confidence_score",
+            # "confidence_score",
             "pred_outcome_conf",
             "pred_goals_conf",
             "pred_corners_conf",
@@ -1457,10 +1457,16 @@ def check_prediction_success(
         return "PENDING"  # Should not be reached
 
     # --- 2. Over/Under YELLOW CARDS ---
+    # Accept "Over 4.5 Cards", "Under 3.5 Cards", "O 2.5 Cards", etc. (with or without "yellow")
     yellow_card_ou_match = re.search(
-        r"\b(o|u|over|under)\s*(\d+(?:\.\d+)?)\s*(?:yellow\s*cards?|yc\b|cards?\b(?!\s*red))",
+        r"\b(o|u|over|under)\s*(\d+(?:\.\d+)?)\s*cards?\b",
         pred_lower,
     )
+    # if not yellow_card_ou_match:
+    #   # Fallback: match "Over 4.5 Cards" or "Under 3.5 Cards" (no "yellow")
+    #   yellow_card_ou_match = re.search(
+    #     r"\b(o|u|over|under)\s*(\d+(?:\.\d+)?)\s*cards?\b", pred_lower
+    #   )
     if yellow_card_ou_match:
         if not yellow_cards_valid:
             return "PENDING"
@@ -2832,7 +2838,11 @@ if not filtered_df.empty:
     # Apply Confidence Score Filter (Include rows with NaN scores)
     # --- !!! MODIFIED Confidence Score Filter Logic !!! ---
     # Convert score column to numeric, coercing errors to NaN
-    scores_numeric = pd.to_numeric(filtered_df["confidence_score"], errors="coerce")
+    # Extract the first number (before any '/' or non-digit) from confidence_score
+    scores_numeric = pd.to_numeric(
+        filtered_df["confidence_score"].astype(str).str.extract(r"(\d+)")[0],
+        errors="coerce",
+    )
 
     # Create mask for rows that are WITHIN the selected score range
     range_mask = (scores_numeric >= selected_confidence_range[0]) & (
@@ -2921,7 +2931,7 @@ else:
 
 # Convert filtered DataFrame back to list of dicts for existing display logic
 # Or adapt display logic to use the filtered_df directly
-filtered_matches_list = []
+filtered_matches_list = {}
 if not filtered_df.empty:
     # Replace NaN with None for compatibility if needed by display code
     filtered_matches_list = (
@@ -3030,19 +3040,27 @@ if not selected_match_data:
                 # Display matches within the league
                 for match in league_matches:
                     # --- Get match data ---
-                    home_goals = match.get("HomeGoals", "?")
-                    away_goals = match.get("AwayGoals", "?")
-                    corners = match.get("Corners")  # Get corners count
-                    home_team = match.get("home_team", "?")
-                    away_team = match.get("away_team", "?")
-                    rec_pred = match.get("rec_prediction")
-                    value_bet = match.get("value_bets")
-                    match_time = match.get("time", "--")
-                    confidence_score = match.get("confidence_score")
-                    cards = match.get("ÝellowCards", "--")
-                    outcome_conf = match.get("pred_outcome_conf")
-                    outcome_val_raw = match.get("pred_outcome", "--").split("(")
+                    if match is not None and isinstance(match, dict):
+                        home_goals = match.get("HomeGoals", "?")
+                        away_goals = match.get("AwayGoals", "?")
+                        corners = match.get("Corners")  # Get corners count
+                        home_team = match.get("home_team", "?")
+                        away_team = match.get("away_team", "?")
+                        rec_pred = match.get("rec_prediction", "--")
+                        value_bet = match.get("value_bets")
+                        match_time = match.get("time", "--")
+                        confidence_score = match.get("confidence_score")
+                        cards = match.get("YellowCards", "--")
+                        outcome_conf = match.get("pred_outcome_conf")
+                        outcome_val_raw = match.get("pred_outcome", "--").split("(")
 
+                    else:
+                        home_goals = away_goals = corners = home_team = away_team = (
+                            rec_pred
+                        ) = value_bet = match_time = confidence_score = cards = (
+                            outcome_conf
+                        ) = outcome_val_raw = None
+                    # print(rec_pred)
                     # --- Determine Result Status ---
                     result_status = None
                     scores_available = isinstance(
@@ -3065,8 +3083,16 @@ if not selected_match_data:
                         with col0:
                             st.markdown(f"**{match_time}**", unsafe_allow_html=True)
 
-                            if confidence_score and confidence_score >= 7:
-                                st.markdown("⭐", unsafe_allow_html=True)
+                            try:
+                                # Extract the first number from confidence_score (handles formats like "5/10", "[4/10]", or text)
+                                conf_match = re.search(r"(\d+)", str(confidence_score))
+                                conf_val = (
+                                    int(conf_match.group(1)) if conf_match else None
+                                )
+                                if conf_val is not None and conf_val >= 7:
+                                    st.markdown("⭐", unsafe_allow_html=True)
+                            except (ValueError, TypeError):
+                                pass
 
                         with col1:
                             home_logo = (
@@ -3158,10 +3184,10 @@ if not selected_match_data:
 
                             # --- Check and Display Best Bet ---
                             # Pass necessary stats to the check function
-                            rec_pred_parts = rec_pred.split("(")
-                            rec_pred_only = rec_pred_parts[0].strip()
+                            # rec_pred_parts = rec_pred.split("(")
+                            # rec_pred_only = rec_pred_parts[0].strip()
                             rec_pred_won = check_prediction_success(
-                                rec_pred_only,
+                                rec_pred,
                                 home_goals,
                                 away_goals,
                                 corners,
@@ -3169,10 +3195,11 @@ if not selected_match_data:
                                 home_team,
                                 away_team,
                             )
-                            if rec_pred:
-                                pred_display = f"<span style='font-weight:bold;text-decoration: overline;'>Best Bet: {rec_pred_only}{confidence_text}</span>"
+                            # st.info(f"Cards: {cards}")
+                            if rec_pred and rec_pred != "--":
+                                pred_display = f"<span style='font-weight:bold;text-decoration: overline;'>Best Bet: {str(rec_pred)}({confidence_score})</span>"
                                 if rec_pred_won == "WIN":
-                                    pred_display = f"<span style='font-weight:bold;text-decoration: overline;'>Best Bet: </span><span style='color:green; font-weight:bold;text-decoration: overline;'>{rec_pred}{confidence_text} ✅</span>"  # Added checkmark
+                                    pred_display = f"<span style='font-weight:bold;text-decoration: overline;'>Best Bet: </span><span style='color:green; font-weight:bold;text-decoration: overline;'>{rec_pred}({confidence_score}) ✅</span>"  # Added checkmark
                                     st.caption(
                                         f"{pred_display}",
                                         unsafe_allow_html=True,
@@ -3236,7 +3263,7 @@ if not selected_match_data:
                                 away_team,
                             )
                             if outcome_val:
-                                outcome_display = f"<span style='font-weight:bold; text-decoration: underline;'>Match outcome: {outcome_val}({outcome_conf_text})</span>"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val}</span>"
+                                outcome_display = f"<span style='font-weight:bold; text-decoration: underline;'>Match outcome: {outcome_val} ({outcome_conf_text})</span>"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val}</span>"
                                 if outcome_bet_won == "WIN":
                                     outcome_display = f"<span style='font-weight:bold; text-decoration: underline;'>Match outcome: </span><span style='color:green; font-weight:bold; text-decoration: underline;'>{outcome_val}({outcome_conf_text}) ✅</span>"
                                     st.caption(
@@ -3770,7 +3797,14 @@ else:
     #     st.caption("")
 
     if confidence_score != "--" and not pd.isna(confidence_score):
-        confidence_score = int(confidence_score)
+        try:
+            # Extract the first number from confidence_score (handles formats like "5/10", "[4/10]", or text)
+            conf_match = re.search(r"(\d+)", str(confidence_score))
+            conf_val = int(conf_match.group(1)) if conf_match else None
+            if conf_val is not None:  # and conf_val >= 7
+                confidence_score = conf_val
+        except (ValueError, TypeError):
+            pass
 
     pred_cols1, pred_cols2, pred_cols3, pred_cols4 = st.columns([1, 2, 2, 3])
     pred_cols1.metric("Overall Confidence", f"{confidence_score}")  # /10
