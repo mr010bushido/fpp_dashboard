@@ -262,24 +262,31 @@ LEAGUE_CODE_MAP = {  # media.api-sports.io
     "England, League One": "https://fpp-dashboard-media.b-cdn.net/football/leagues/41.png",
     "England, League Two": "https://fpp-dashboard-media.b-cdn.net/football/leagues/42.png",
     "Faroe-Islands, Meistaradeildin": "https://fpp-dashboard-media.b-cdn.net/football/leagues/367.png",
+    "Finland, Veikkausliiga": "https://fpp-dashboard-media.b-cdn.net/football/leagues/244.png",
     "France, Ligue 1": "https://fpp-dashboard-media.b-cdn.net/football/leagues/61.png",
     "France, Ligue 2": "https://fpp-dashboard-media.b-cdn.net/football/leagues/62.png",
     "Germany, Bundesliga": "https://fpp-dashboard-media.b-cdn.net/football/leagues/78.png",
     "Germany, 2. Bundesliga": "https://fpp-dashboard-media.b-cdn.net/football/leagues/79.png",
+    "Iceland, Úrvalsdeild": "https://fpp-dashboard-media.b-cdn.net/football/leagues/164.png",
+    "Iceland, 1. Deild": "https://fpp-dashboard-media.b-cdn.net/football/leagues/165.png",
     "Italy, Serie A": "https://fpp-dashboard-media.b-cdn.net/football/leagues/135.png",
     "Italy, Serie B": "https://fpp-dashboard-media.b-cdn.net/football/leagues/136.png",
     "Ireland, Premier Division": "https://fpp-dashboard-media.b-cdn.net/football/leagues/357.png",
     "Ireland, First Division": "https://fpp-dashboard-media.b-cdn.net/football/leagues/358.png",
     "Latvia, Virsliga": "https://fpp-dashboard-media.b-cdn.net/football/leagues/365.png",
+    "Latvia, 1. Liga": "https://fpp-dashboard-media.b-cdn.net/football/leagues/364.png",
     "Lithuania, A Lyga": "https://fpp-dashboard-media.b-cdn.net/football/leagues/362.png",
     "Netherlands, Eredivisie": "https://fpp-dashboard-media.b-cdn.net/football/leagues/88.png",
     "Netherlands, Eerste Divisie": "https://fpp-dashboard-media.b-cdn.net/football/leagues/89.png",
+    "Norway, Eliteserien": "https://fpp-dashboard-media.b-cdn.net/football/leagues/103.png",
     "Portugal, Primeira Liga": "https://fpp-dashboard-media.b-cdn.net/football/leagues/94.png",
     "Poland, Ekstraklasa": "https://fpp-dashboard-media.b-cdn.net/football/leagues/106.png",
     "Russia, Premier League": "https://fpp-dashboard-media.b-cdn.net/football/leagues/235.png",
     "Scotland, Premiership": "https://fpp-dashboard-media.b-cdn.net/football/leagues/179.png",
     "Spain, La Liga": "https://fpp-dashboard-media.b-cdn.net/football/leagues/140.png",
     "Spain, Segunda División": "https://fpp-dashboard-media.b-cdn.net/football/leagues/141.png",
+    "Sweden, Allsvenskan": "https://fpp-dashboard-media.b-cdn.net/football/leagues/113.png",
+    "Sweden, Superettan": "https://fpp-dashboard-media.b-cdn.net/football/leagues/114.png",
     "Switzerland, Super League": "https://fpp-dashboard-media.b-cdn.net/football/leagues/207.png",
     "Turkey, Süper Lig": "https://fpp-dashboard-media.b-cdn.net/football/leagues/203.png",
     "Turkey, 1. Lig": "https://fpp-dashboard-media.b-cdn.net/football/leagues/204.png",
@@ -287,6 +294,8 @@ LEAGUE_CODE_MAP = {  # media.api-sports.io
     "Wales, Premier League": "https://fpp-dashboard-media.b-cdn.net/football/leagues/110.png",
     "Argentina, Liga Profesional Argentina": "https://fpp-dashboard-media.b-cdn.net/football/leagues/128.png",
     "Argentina, Primera B Metropolitana": "https://fpp-dashboard-media.b-cdn.net/football/leagues/131.png",
+    "Brazil, Serie A": "https://fpp-dashboard-media.b-cdn.net/football/leagues/71.png",
+    "Brazil, Serie B": "https://fpp-dashboard-media.b-cdn.net/football/leagues/72.png",
     "Chile, Primera División": "https://fpp-dashboard-media.b-cdn.net/football/leagues/265.png",
     "Colombia, Primera A": "https://fpp-dashboard-media.b-cdn.net/football/leagues/239.png",
     "Colombia, Primera B": "https://fpp-dashboard-media.b-cdn.net/football/leagues/240.png",
@@ -1329,11 +1338,10 @@ def get_flag_url(country_name, league_name):
     # if country_name not in ['UEFA Champions League','UEFA Europa Conference League','UEFA Europa League','AFC Champions League']:
     league_string = f"{country_name}, {league_name}"
     # url = COUNTRY_CODE_MAP.get(country_name.title()) # Match title case keys
-    url = LEAGUE_CODE_MAP.get(league_string.title())  # Match title case keys
+    url = LEAGUE_CODE_MAP.get(league_string)  # Use original case for key lookup
     # else:
     #     url = COUNTRY_CODE_MAP.get(country_name)
 
-    return url
     if url:
         return url
     else:
@@ -3076,13 +3084,11 @@ if not selected_match_data:
                             result_status = "Draw"
 
                     with st.container():
-                        col0, col1, col2, col3, col4, col5, col6, col7 = st.columns(
-                            [0.25, 0.2, 0.7, 0.3, 0.3, 0.3, 1, 1]
+                        col0, col1, col2, col3, col4, col5, col6, col7, col8 = (
+                            st.columns([0.1, 0.3, 0.2, 0.7, 0.3, 0.3, 0.3, 1, 0.4])
                         )
 
                         with col0:
-                            st.markdown(f"**{match_time}**", unsafe_allow_html=True)
-
                             try:
                                 # Extract the first number from confidence_score (handles formats like "5/10", "[4/10]", or text)
                                 conf_match = re.search(r"(\d+)", str(confidence_score))
@@ -3091,10 +3097,18 @@ if not selected_match_data:
                                 )
                                 if conf_val is not None and conf_val >= 7:
                                     st.markdown("⭐", unsafe_allow_html=True)
+                                else:
+                                    st.markdown(" ", unsafe_allow_html=True)
                             except (ValueError, TypeError):
                                 pass
 
                         with col1:
+                            st.markdown(
+                                f"**{match.get('date', '--')}**", unsafe_allow_html=True
+                            )
+                            st.markdown(f"**{match_time}**", unsafe_allow_html=True)
+
+                        with col2:
                             home_logo = (
                                 match.get("home_team_logo", None)
                                 or "https://placehold.co/25x25/000000/FFF"
@@ -3106,7 +3120,7 @@ if not selected_match_data:
                             st.image(home_logo, width=25)
                             st.image(away_logo, width=25)
 
-                        with col2:
+                        with col3:
                             home_rank = match.get("home_rank", None) or "--"
                             away_rank = match.get("away_rank", None) or "--"
                             st.markdown(
@@ -3116,7 +3130,7 @@ if not selected_match_data:
                                 f"**{away_team} ({away_rank})**", unsafe_allow_html=True
                             )
 
-                        with col3:
+                        with col4:
                             # Apply bold styling to the winning score
                             # Display Score with Highlighting
                             if scores_available:
@@ -3148,7 +3162,8 @@ if not selected_match_data:
                                     st.markdown(
                                         f"{away_score_display}", unsafe_allow_html=True
                                     )
-                        with col4:
+
+                        with col5:
                             # --- NEW: Display Stats if available ---
                             corners = match.get("Corners")
 
@@ -3157,7 +3172,7 @@ if not selected_match_data:
                                     f"🚩 {int(corners)}", unsafe_allow_html=True
                                 )
 
-                        with col5:
+                        with col6:
                             yellow_cards = match.get("YellowCards")
                             red_cards = match.get("RedCards")
                             if yellow_cards is not None:
@@ -3175,7 +3190,7 @@ if not selected_match_data:
                             #     # Join the stats with a separator and display
                             #     st.markdown(f"{' '.join(stats_display)}")
 
-                        with col6:
+                        with col7:
                             confidence_text = (
                                 f" ({confidence_score}/10)"
                                 if confidence_score is not None
@@ -3278,7 +3293,7 @@ if not selected_match_data:
                             else:
                                 st.caption("")
 
-                        with col7:
+                        with col8:
                             st.button(
                                 "View Details",
                                 key=match["match_id"],
