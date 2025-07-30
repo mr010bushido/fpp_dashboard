@@ -279,6 +279,7 @@ LEAGUE_CODE_MAP = {  # media.api-sports.io
     "Netherlands, Eredivisie": "https://fpp-dashboard-media.b-cdn.net/football/leagues/88.png",
     "Netherlands, Eerste Divisie": "https://fpp-dashboard-media.b-cdn.net/football/leagues/89.png",
     "Norway, Eliteserien": "https://fpp-dashboard-media.b-cdn.net/football/leagues/103.png",
+    "Norway, 1. Division": "https://fpp-dashboard-media.b-cdn.net/football/leagues/104.png",
     "Portugal, Primeira Liga": "https://fpp-dashboard-media.b-cdn.net/football/leagues/94.png",
     "Poland, Ekstraklasa": "https://fpp-dashboard-media.b-cdn.net/football/leagues/106.png",
     "Russia, Premier League": "https://fpp-dashboard-media.b-cdn.net/football/leagues/235.png",
@@ -314,6 +315,11 @@ MESSAGE_TIMEOUT_SECONDS = 7  # How long messages should persist (in seconds)
 DEFAULT_TIME_RANGE = (0, 23)
 DEFAULT_RANK_RANGE = (1, 50)  # A sensible wide default for ranks
 DEFAULT_ODDS_RANGE = (1.01, 25.0)  # A sensible wide default for odds
+
+# --- Define colors ---
+GREEN: str = "#57D58D"  # "#A1FF0A"  # "#A5BE00"  # "#A7C957"
+
+
 # --- Session State Initialization ---
 # Ensure the message list exists in session state
 if "transient_messages" not in st.session_state:
@@ -1021,6 +1027,7 @@ def load_data_from_csv(filepath) -> pd.DataFrame:
             "pred_corners_conf",
             "pred_cards_conf",
             "pred_alt_conf",
+            "model_success_rate",
             "Last5_HomeBothTeamsToScore",
             "Last5HomeAvergeTotalShots",
             "Last5HomeAvergeTotalShotsOnGoal",
@@ -1521,7 +1528,7 @@ def check_prediction_success(
     away_yellow_cards,
     home_red_cards,
     away_red_cards,
-):
+) -> str | None:
     if (
         not prediction_str
         or not isinstance(prediction_str, str)
@@ -1529,7 +1536,8 @@ def check_prediction_success(
     ):
         return "PENDING"
 
-    pred_lower = prediction_str.strip().lower()
+    pred_cleaned = clean_prediction_string(prediction_str.strip())
+    pred_lower = pred_cleaned.lower()
 
     # --- Data Validity ---
     scores_valid = (
@@ -1545,14 +1553,24 @@ def check_prediction_success(
     home_cards_valid = (
         isinstance(home_yellow_cards, (int, float))
         and not math.isnan(home_yellow_cards)
-        and isinstance(home_red_cards, (int, float))
-        and not math.isnan(home_red_cards)
+        and (
+            home_red_cards is None
+            or (
+                isinstance(home_red_cards, (int, float))
+                and not math.isnan(home_red_cards)
+            )
+        )
     )
     away_cards_valid = (
         isinstance(away_yellow_cards, (int, float))
         and not math.isnan(away_yellow_cards)
-        and isinstance(away_red_cards, (int, float))
-        and not math.isnan(away_red_cards)
+        and (
+            away_red_cards is None
+            or (
+                isinstance(away_red_cards, (int, float))
+                and not math.isnan(away_red_cards)
+            )
+        )
     )
 
     all_cards_valid = home_cards_valid and away_cards_valid
@@ -1570,10 +1588,6 @@ def check_prediction_success(
         actual_away_win = away_goals > home_goals
         actual_draw = home_goals == away_goals
         total_actual_goals = home_goals + away_goals
-
-    # ==========================================================
-    # --- NEW: COMPLEX COMBO BETS & SPECIFIC MARKETS (CHECK FIRST) ---
-    # ==========================================================
 
     # --- 1. Team to Win AND Over/Under Goals ---
     # Catches "Urawa to Win and Over 1.5 Goals", "Home Win & Under 3.5 Goals"
@@ -1609,6 +1623,43 @@ def check_prediction_success(
             return "WIN"
         else:
             return "LOSS"
+
+    # --- 1a. Team to Score Over/Under Goals ---
+    # Catches "Home Team to Score Over 1.5 Goals", "Away Team to Score Under 2.5 Goals"
+    team_score_ou_match = re.search(
+        r"^(home|away)\s*team\s*to\s*score\s*(over|under)\s*(\d+\.\d+)\s*goals?$",
+        pred_lower,
+    )
+    if team_score_ou_match:
+        team_side, ou_type, line_val_str = team_score_ou_match.groups()
+        line_val = float(line_val_str)
+        if not scores_valid:
+            return "PENDING"
+        if team_side == "home":
+            team_goals = home_goals
+        else:
+            team_goals = away_goals
+        if ou_type == "over":
+            return "WIN" if team_goals > line_val else "LOSS"
+        else:
+            return "WIN" if team_goals < line_val else "LOSS"
+
+    # --- 1b. Team to Win
+    # Catches {Actual Home Team Name} Win e.g."Hebei Kungfu Win(7/10)", "Home Win", "Away Win", "TeamName Win"
+    team_win_match = re.match(
+        r"^(.*?)(?:\s+win)(?:\s*\(\d+\/10\))?$", pred_cleaned, re.IGNORECASE
+    )
+    if team_win_match:
+        if not scores_valid:
+            return "PENDING"
+        team_name_pred = team_win_match.group(1).strip().lower()
+        # Check if predicted team matches home or away team
+        if team_name_pred == home_team_lower or team_name_pred == "home":
+            return "WIN" if actual_home_win else "LOSS"
+        elif team_name_pred == away_team_lower or team_name_pred == "away":
+            return "WIN" if actual_away_win else "LOSS"
+        # If team name doesn't match either, treat as pending or loss
+        return "PENDING"
 
     # --- 2. Double Chance AND Under Goals ---
     # Catches "Away Team Win or Draw and Under 3.5 Goals"
@@ -1685,32 +1736,29 @@ def check_prediction_success(
 
     # --- 5. Team Total Cards Over/Under ---
     # Catches "Home Team Total Cards Over 1.5"
-    team_card_ou_match = re.search(
-        r"^(home\s*team|away\s*team)\s*(?:total\s*)?cards\s*(over|under)\s*(\d+(?:\.\d+)?)$",
-        pred_lower,
-    )
-    if team_card_ou_match:
-        team_part, ou_type, line_val_str = team_card_ou_match.groups()
-        line_val = float(line_val_str)
+    # team_card_ou_match = re.search(
+    #     r"^(home\s*team|away\s*team)\s*(?:total\s*)?cards\s*(over|under)\s*(\d+(?:\.\d+)?)$",
+    #     pred_lower,
+    # )
+    # if team_card_ou_match:
+    #     team_part, ou_type, line_val_str = team_card_ou_match.groups()
+    #     line_val = float(line_val_str)
 
-        target_team_cards = 0
-        if team_part == "home team":
-            if not home_cards_valid:
-                return "PENDING"
-            # Using booking points: Yellow=1, Red=2. Adjust if your source uses different rules.
-            target_team_cards = (home_yellow_cards or 0) + ((home_red_cards or 0) * 2)
-        elif team_part == "away team":
-            if not away_cards_valid:
-                return "PENDING"
-            target_team_cards = (away_yellow_cards or 0) + ((away_red_cards or 0) * 2)
+    #     target_team_cards = 0
+    #     if team_part == "home team":
+    #         if not home_cards_valid:
+    #             return "PENDING"
+    #         # Using booking points: Yellow=1, Red=2. Adjust if your source uses different rules.
+    #         target_team_cards = (home_yellow_cards or 0) + ((home_red_cards or 0) * 2)
+    #     elif team_part == "away team":
+    #         if not away_cards_valid:
+    #             return "PENDING"
+    #         target_team_cards = (away_yellow_cards or 0) + ((away_red_cards or 0) * 2)
 
-        if ou_type == "over":
-            return "WIN" if target_team_cards > line_val else "LOSS"
-        elif ou_type == "under":
-            return "WIN" if target_team_cards < line_val else "LOSS"
-    # ==========================================================
-    # --- EXISTING & SIMPLER MARKETS (CHECK AFTER COMPLEX ONES) ---
-    # ==========================================================
+    #     if ou_type == "over":
+    #         return "WIN" if target_team_cards > line_val else "LOSS"
+    #     elif ou_type == "under":
+    #         return "WIN" if target_team_cards < line_val else "LOSS"
 
     # --- 6. Over/Under CORNERS ---
     corner_ou_match = re.search(
@@ -1736,9 +1784,12 @@ def check_prediction_success(
     # This pattern looks for "over/under X.Y cards" but specifically avoids "home team" or "away team".
     # Accepts "Over 4.5 Yellow Cards", "Under 3.5 Yellow Cards", "O 2.5 Yellow Cards", etc. (with or without "yellow")
     total_card_ou_match = re.search(
-        r"\b(o|u|over|under)\s*(\d+(?:\.\d+)?)\s*(yellow\s*)?cards?\b",  # r"^(?!.*\b(over|under)\s*(\d+(?:\.\d+)?)\s*(?:yellow\s*)?cards?$",
+        r"\b(o|u|over|under)\s*(\d+(?:\.\d+)?)\s*(?:yellow\s*)?cards?\b",  # 'yellow' is optional
         pred_lower,
     )
+    # st.caption(
+    #     f"Total card ou match: {total_card_ou_match}, valid: {all_cards_valid} | HY:{home_yellow_cards} is {home_cards_valid}, AY:{away_yellow_cards} is {away_cards_valid}"
+    # )
     if total_card_ou_match:
         if not all_cards_valid:
             return "PENDING"
@@ -3284,6 +3335,46 @@ if not selected_match_data:
             for league_key in sorted_leagues:
                 country, league_name = league_key
                 league_matches = matches_by_league[league_key]
+                league_matches_played = [
+                    match
+                    for match in league_matches
+                    if match.get("HomeGoals") is not None
+                    and match.get("AwayGoals") is not None
+                    and match.get("rec_prediction")
+                ]
+
+                # Count WINs for rec_prediction in league_matches_played
+                win_count = 0
+                for match in league_matches_played:
+                    result = check_prediction_success(
+                        match.get("rec_prediction"),
+                        match.get("HomeGoals"),
+                        match.get("AwayGoals"),
+                        match.get("Corners"),
+                        match.get("YellowCards"),
+                        match.get("home_team"),
+                        match.get("away_team"),
+                        match.get("HomeYellowsResults"),
+                        match.get("AwayYellowsResults"),
+                        match.get("HomeRedResults"),
+                        match.get("AwayRedResults"),
+                    )
+                    # st.caption(result)
+                    if result == "WIN":
+                        win_count += 1
+
+                # Display count of WINs
+                # st.caption(f"Best Bet WINs: {win_count} / {len(league_matches_played)}")
+
+                if (
+                    league_matches_played
+                ):  # league_matches and "model_success_rate" in league_matches[0]:
+                    sr = win_count / len(
+                        league_matches_played
+                    )  # league_matches[0].get("model_success_rate")
+                else:
+                    sr = None
+
                 # Display League Header with country emoji and league name in one row
                 col1, col2 = st.columns([0.1, 4])  # Adjust column widths as needed
                 with col1:
@@ -3315,7 +3406,14 @@ if not selected_match_data:
                     if flag_url:
                         st.image(flag_url, width=25)
                 with col2:
-                    st.markdown(f"##### {country} - {league_name}")  # League name
+                    if sr is not None:
+                        st.markdown(
+                            f"##### {country} - {league_name} (Success Rate: {sr * 100:.1f}%)"
+                        )
+                    else:
+                        st.markdown(
+                            f"##### {country} - {league_name} (Success Rate: --)"
+                        )
 
                 # Display matches within the league
                 for match in league_matches:
@@ -3326,9 +3424,7 @@ if not selected_match_data:
                         corners = match.get("Corners")  # Get corners count
                         home_team = match.get("home_team", "?")
                         away_team = match.get("away_team", "?")
-                        rec_pred = clean_prediction_string(
-                            match.get("rec_prediction")
-                        )  # , "--"
+                        rec_pred = match.get("rec_prediction")
                         alt_pred = match.get("pred_alt", "--")  # ,
                         alt_pred_conf = match.get("pred_alt_conf", "--")  # ,
                         value_bet = match.get("value_bets")
@@ -3362,7 +3458,7 @@ if not selected_match_data:
 
                     with st.container():
                         col0, col1, col2, col3, col4, col5, col6, col7, col8 = (
-                            st.columns([0.1, 0.3, 0.2, 0.7, 0.3, 0.3, 0.3, 1, 0.4])
+                            st.columns([0.1, 0.3, 0.2, 0.7, 0.1, 0.4, 0.5, 0.9, 0.4])
                         )
 
                         with col0:
@@ -3443,29 +3539,69 @@ if not selected_match_data:
                         with col5:
                             # --- NEW: Display Stats if available ---
                             corners = match.get("Corners")
-
-                            if corners is not None:
-                                st.markdown(
-                                    f"🚩 {int(corners)}", unsafe_allow_html=True
-                                )
-
-                        with col6:
                             yellow_cards = match.get("YellowCards")
                             red_cards = match.get("RedCards")
+                            stats_display = []
+                            if corners is not None:
+                                # st.markdown(
+                                #     f"<div style='font-size: 1em'>🚩 {int(corners)}</div>",
+                                #     unsafe_allow_html=True,
+                                # )
+                                stats_display.append(f"🚩 {int(corners)}")
                             if yellow_cards is not None:
                                 # Using a unicode character for yellow card
-                                st.markdown(
-                                    f"🟨 {int(yellow_cards)}", unsafe_allow_html=True
-                                )
+                                # st.markdown(
+                                #     f"<div style='font-size: 1em'>🟨 {int(yellow_cards)}</div>",
+                                #     unsafe_allow_html=True,
+                                # )
+                                stats_display.append(f"🟨 {int(yellow_cards)}")
                             if red_cards is not None:
                                 # Using a unicode character for red card
-                                st.markdown(
-                                    f"🟥 {int(red_cards)}", unsafe_allow_html=True
-                                )
+                                # st.markdown(
+                                #     f"<div style='font-size: 1em'>🟥 {int(red_cards)}</div>",
+                                #     unsafe_allow_html=True,
+                                # )
+                                stats_display.append(f"🟥 {int(red_cards)}")
 
-                            # if stats_display:
-                            #     # Join the stats with a separator and display
-                            #     st.markdown(f"{' '.join(stats_display)}")
+                            if stats_display:
+                                # Join the stats with a separator and display
+                                st.markdown(f"{' '.join(stats_display)}")
+                            else:
+                                st.markdown("")
+
+                        with col6:
+                            home_xg: str = match.get("xg_h")
+                            away_xg: str = match.get("xg_a")
+                            home_xg_display = (
+                                f"xG: {home_xg:.2f}"
+                                if isinstance(home_xg, (int, float))
+                                else ""
+                            )
+                            away_xg_display = (
+                                f"xG: {away_xg:.2f}"
+                                if isinstance(away_xg, (int, float))
+                                else ""
+                            )
+                            home_xga: str = match.get("xga_h")
+                            away_xga: str = match.get("xga_a")
+                            home_xga_display = (
+                                f"xGA: {home_xga:.2f}"
+                                if isinstance(home_xga, (int, float))
+                                else ""
+                            )
+                            away_xga_display = (
+                                f"xGA: {away_xga:.2f}"
+                                if isinstance(away_xga, (int, float))
+                                else ""
+                            )
+                            st.markdown(
+                                f"<div style='text-align:center; font-size:1em;'>{home_xg_display} &ndash; {home_xga_display}</div>",
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                f"<div style='text-align:center; font-size:1em;'>{away_xg_display} &ndash; {away_xga_display}</div>",
+                                unsafe_allow_html=True,
+                            )
 
                         with col7:
                             confidence_text = (
@@ -3493,16 +3629,18 @@ if not selected_match_data:
                             )
                             # st.info(f"Cards: {cards}")
                             if rec_pred and rec_pred != "--":
-                                pred_display = f"<span style='font-weight:bold;text-decoration: overline;'>Best Bet: {str(rec_pred)}({confidence_score})</span>"
+                                pred_display = (
+                                    f"Best Bet: {rec_pred}({confidence_score})"
+                                )
                                 if rec_pred_won == "WIN":
-                                    pred_display = f"<span style='font-weight:bold;text-decoration: overline;'>Best Bet: </span><span style='color:green; font-weight:bold;text-decoration: overline;'>{rec_pred}({confidence_score}) ✅</span>"  # Added checkmark
-                                    st.caption(
-                                        f"{pred_display}",
+                                    pred_display = f"Best Bet: <span style='color:{GREEN}; '>{rec_pred}({confidence_score}) ✅</span>"  # Added checkmark
+                                    st.markdown(
+                                        f"<div style='text-align:left; font-size:1em; font-weight:normal;text-decoration: overline;'>{pred_display}</div>",
                                         unsafe_allow_html=True,
                                     )
                                 else:
-                                    st.caption(
-                                        f"{pred_display}",
+                                    st.markdown(
+                                        f"<div style='text-align:left; font-size:1em; font-weight:normal;text-decoration: overline;'>{pred_display}</div>",
                                         unsafe_allow_html=True,
                                     )
 
@@ -3527,22 +3665,22 @@ if not selected_match_data:
 
                             # st.info(value_bet_won)
                             if value_bet:
-                                value_display = f"{value_bet}"
+                                value_display = f"Value Tip: {value_bet}"
                                 if value_bet_won == "WIN":
-                                    value_display = f"<span style='color:green; font-weight:bold;'>{value_bet} ✅</span>"  # Added checkmark
-                                    # st.caption(
-                                    #     f"**Value Tip:** {value_display}",
-                                    #     unsafe_allow_html=True,
-                                    # )
-                                # else:
-                                # st.caption(
-                                #     f"**Value Tip:** {value_display}",
-                                #     unsafe_allow_html=True,
-                                # )
+                                    value_display = f"Value Tip: <span style='color:{GREEN};'>{value_bet} ✅</span>"
+                            #         st.markdown(
+                            #             f"<div style='text-align:left; font-size:1em; font-weight:normal;'>{value_display}</div>",
+                            #             unsafe_allow_html=True,
+                            #         )
+                            #     else:
+                            #         st.markdown(
+                            #             f"<div style='text-align:left; font-size:1em; font-weight:normal;'>{value_display}</div>",
+                            #             unsafe_allow_html=True,
+                            #         )
 
-                                # st.caption("")
+                            #         # st.caption("")
                             # else:
-                            # st.caption("")
+                            #     st.caption("")
 
                             # --- Check and Display Alternative Bet ---
                             # Pass necessary stats to the check function
@@ -3562,33 +3700,25 @@ if not selected_match_data:
 
                             # st.info(alt_bet_won)
                             if alt_pred:
-                                alt_bet_display = f"{alt_pred}"
+                                alt_bet_display = f"Alt. Bet: {alt_pred}"
                                 if alt_bet_won == "WIN":
-                                    alt_bet_display = f"<span style='color:green; font-weight:bold;'>{alt_pred} ✅</span>"  # Added checkmark
-                                    st.caption(
-                                        f"**Alt. Bet:** {alt_bet_display}",
-                                        unsafe_allow_html=True,
-                                    )
-                                else:
-                                    st.caption(
-                                        f"**Alt. Bet:** {alt_bet_display}",
-                                        unsafe_allow_html=True,
-                                    )
+                                    alt_bet_display = f"Alt. Bet: <span style='color:{GREEN};'>{alt_pred} ✅</span>"
+                                #     st.markdown(
+                                #         f"<div style='text-align:left; font-size:1em; font-weight:bold;text-decoration: overline;'>{alt_bet_display}</div>",
+                                #         unsafe_allow_html=True,
+                                #     )
+                                # else:
+                                #     st.markdown(
+                                #         f"<div style='text-align:left; font-size:1em; font-weight:bold;text-decoration: overline;'>{alt_bet_display}</div>",
+                                #         unsafe_allow_html=True,
+                                #     )
 
-                                    # st.caption("")
-                            else:
-                                st.caption("")
-
-                            # st.markdown(f"**Best Bet:** {rec_pred}{confidence_text}", unsafe_allow_html=True)
-                            # st.markdown(f"**Value Tip:** {value_bet}", unsafe_allow_html=True)
+                                # st.caption("")
+                            # else:
+                            #     st.caption("")
 
                             # --- Check and Display Match outcome ---
                             # Pass necessary stats to the check function
-                            # outcome_conf_text = (
-                            #     f"{round(outcome_conf)}/10"
-                            #     if outcome_conf is not None
-                            #     else "--"
-                            # )
                             outcome_conf = (
                                 f"({outcome_val_raw[-1].strip()}"
                                 if outcome_val_raw[-1].strip()
@@ -3611,16 +3741,16 @@ if not selected_match_data:
                             )
 
                             if outcome_val:
-                                outcome_display = f"<span style='font-weight:bold; text-decoration: underline;'>Match outcome: {outcome_val}</span>"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val}</span>"
+                                outcome_display = f"Match outcome: {outcome_val}"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val}</span>"
                                 if outcome_bet_won == "WIN":
-                                    outcome_display = f"<span style='font-weight:bold; text-decoration: underline;'>Match outcome: </span><span style='color:green; font-weight:bold; text-decoration: underline;'>{outcome_val} ✅</span>"
-                                    st.caption(
-                                        f"{outcome_display}",
+                                    outcome_display = f"Match outcome: <span style='color:{GREEN};'>{outcome_val} ✅</span>"
+                                    st.markdown(
+                                        f"<div style='text-align:left; font-size:1em; font-weight:normal;text-decoration: none;'>{outcome_display}</div>",
                                         unsafe_allow_html=True,
                                     )
                                 else:
-                                    st.caption(
-                                        f"{outcome_display}",
+                                    st.markdown(
+                                        f"<div style='text-align:left; font-size:1em; font-weight:normal;text-decoration: none;'>{outcome_display}</div>",
                                         unsafe_allow_html=True,
                                     )
                                     # st.caption("")
@@ -3903,7 +4033,7 @@ else:
     cards = selected_match_data.get("YellowCards", "--")
     home_team = selected_match_data.get("home_team", "?")
     away_team = selected_match_data.get("away_team", "?")
-    rec_pred = clean_prediction_string(selected_match_data.get("rec_prediction"))
+    rec_pred = selected_match_data.get("rec_prediction")
     value_bet = selected_match_data.get("value_bets")
     match_time = selected_match_data.get("time", "--")
     card_pred = selected_match_data.get("pred_card", "--")
@@ -4135,7 +4265,7 @@ else:
     if rec_pred:
         pred_display = f"{rec_pred}({confidence_score})"
         if rec_pred_won == "WIN":
-            pred_display = f"{rec_pred}({confidence_score}) ✅"  # <span style='color:green; font-size=1.5em font-weight:bold;'></span>" # Added checkmark
+            pred_display = f"{rec_pred}({confidence_score}) ✅"  # <span style='color:{GREEN}; font-size=1.5em font-weight:bold;'></span>" # Added checkmark
         # st.caption(f"**Best Bet:** {pred_display}", unsafe_allow_html=True)
         # st.success(f"**Best Bet:** {pred_display}")
 
@@ -4161,7 +4291,7 @@ else:
     if value_bet:
         value_display = f"{value_bet}"
         if value_bet_won == "WIN":
-            value_display = f"{value_bet} ✅"  # <span style='color:green; font-weight:bold;'></span>" # Added checkmark
+            value_display = f"{value_bet} ✅"  # <span style='color:{GREEN}; font-weight:bold;'></span>" # Added checkmark
         # st.caption(f"**Value Tip:** {value_display}", unsafe_allow_html=True)
     # else:
     #     st.caption("")
@@ -4233,7 +4363,7 @@ else:
             if outcome_val:
                 outcome_display = None  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val}</span>"
                 if outcome_bet_won:
-                    outcome_display = "WIN"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val} ✅</span>" #color:green;
+                    outcome_display = "WIN"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val} ✅</span>" #color:{GREEN};
             predictions_for_table.append(
                 {
                     "Market": "Match Outcome",
@@ -4268,7 +4398,7 @@ else:
             if alt_val:
                 alt_display = None  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{alt_val}</span>"
                 if alt_bet_won:
-                    alt_display = "WIN"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{alt_val} ✅</span>" #color:green;
+                    alt_display = "WIN"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{alt_val} ✅</span>" #color:{GREEN};
             predictions_for_table.append(
                 {
                     "Market": "Alternative Prediction",
@@ -4305,7 +4435,7 @@ else:
             if goals_val:
                 goals_display = None  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{goals_val}</span>"
                 if goals_bet_won:
-                    goals_display = "WIN"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{goals_val} ✅</span>" #color:green;
+                    goals_display = "WIN"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{goals_val} ✅</span>" #color:{GREEN};
             predictions_for_table.append(
                 {
                     "Market": "Goals (O/U)",
@@ -4344,7 +4474,7 @@ else:
             if cards_val:
                 cards_display = None  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{cards_val} ({cards_conf}/10)</span>"
                 if cards_bet_won:
-                    cards_display = "WIN"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{cards_val} ({cards_conf}/10) ✅</span>" #color:green;
+                    cards_display = "WIN"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{cards_val} ({cards_conf}/10) ✅</span>" #color:{GREEN};
             predictions_for_table.append(
                 {
                     "Market": "Cards (O/U)",
@@ -4382,7 +4512,7 @@ else:
             if corners_val:
                 corners_display = None  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{corners_val} ({corners_conf}/10)</span>"
             if corners_bet_won:
-                corners_display = "WIN"  # = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{corners_val} ({corners_conf}/10) ✅</span>" #color:green;
+                corners_display = "WIN"  # = f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{corners_val} ({corners_conf}/10) ✅</span>" #color:{GREEN};
             predictions_for_table.append(
                 {
                     "Market": "Corners (O/U)",
