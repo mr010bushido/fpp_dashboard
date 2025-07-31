@@ -4454,7 +4454,11 @@ else:
             cards_conf_text = (
                 f"{round(cards_conf)}/10" if cards_conf is not None else "--"
             )
-            cards_val_raw = selected_match_data.get("pred_cards", "--").split("(")
+            pred_cards_val = selected_match_data.get("pred_cards")
+            if pred_cards_val is not None:
+                cards_val_raw = pred_cards_val.split("(")
+            else:
+                cards_val_raw = ["--"]
             cards_val = (
                 f"{cards_val_raw[0].strip()} Yellow Cards" if cards_val_raw else None
             )
