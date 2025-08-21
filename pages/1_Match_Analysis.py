@@ -3388,7 +3388,6 @@ if not selected_match_data:
                             flag_url_from_data = first_match_in_league.get(
                                 "country_logo"
                             )
-                            # --------------------------------------
 
                     # if flag_url_from_data:
                     #     st.image(flag_url_from_data, width=25) # Display image if URL found
@@ -3668,19 +3667,19 @@ if not selected_match_data:
                                 value_display = f"Value Tip: {value_bet}"
                                 if value_bet_won == "WIN":
                                     value_display = f"Value Tip: <span style='color:{GREEN};'>{value_bet} ✅</span>"
-                            #         st.markdown(
-                            #             f"<div style='text-align:left; font-size:1em; font-weight:normal;'>{value_display}</div>",
-                            #             unsafe_allow_html=True,
-                            #         )
-                            #     else:
-                            #         st.markdown(
-                            #             f"<div style='text-align:left; font-size:1em; font-weight:normal;'>{value_display}</div>",
-                            #             unsafe_allow_html=True,
-                            #         )
+                                    st.markdown(
+                                        f"<div style='text-align:left; font-size:1em; font-weight:normal;'>{value_display}</div>",
+                                        unsafe_allow_html=True,
+                                    )
+                                else:
+                                    st.markdown(
+                                        f"<div style='text-align:left; font-size:1em; font-weight:normal;'>{value_display}</div>",
+                                        unsafe_allow_html=True,
+                                    )
 
-                            #         # st.caption("")
-                            # else:
-                            #     st.caption("")
+                                    # st.caption("")
+                            else:
+                                st.caption("")
 
                             # --- Check and Display Alternative Bet ---
                             # Pass necessary stats to the check function
