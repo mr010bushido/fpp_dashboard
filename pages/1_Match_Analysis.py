@@ -1,21 +1,20 @@
 import glob  # For finding weekly files
-import io
 import math
 import os
 import re
-import time  # Needed for timestamps
-import traceback  # For detailed error logging
-from collections import defaultdict  # For grouping by league
+import time
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-# import psycopg2 # Optional
-# from psycopg2 import sql # Optional
 import altair as alt  # Keep altair import
 import emoji
 import numpy as np  # For NaN handling
 import pandas as pd
 import streamlit as st
+
+# import psycopg2 # Optional
+# from psycopg2 import sql # Optional
 
 st.set_page_config(
     page_title="Match Analysis",  # You can have a page-specific title
