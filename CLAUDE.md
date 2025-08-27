@@ -89,7 +89,7 @@ Uses CDN for team logos and country flags: `https://fpp-dashboard-media.b-cdn.ne
 - Pre-match analysis is fully implemented
 - Results analysis is placeholder/stub
 - PostgreSQL integration available but not required
-- Main application logic concentrated in 1_Match_Analysis.py (~3000 lines)[byterover-mcp]
+- Main application logic concentrated in 1_Match_Analysis.py [~3000 lines](byterover-mcp)
 
 # important 
 always use byterover-retrieve-knowledge tool to get the related context before any tasks 
