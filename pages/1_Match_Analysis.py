@@ -4493,7 +4493,11 @@ else:
             corners_conf_text = (
                 f"{round(corners_conf)}/10" if corners_conf is not None else "--"
             )
-            corners_val_raw = selected_match_data.get("pred_corners", "--").split("(")
+            corners_val_raw = selected_match_data.get(
+                "pred_corners", "--"
+            )  # .split("(")
+            if corners_val_raw is not None:
+                corners_val_raw = corners_val_raw.split("(")
             corners_val = (
                 f"{corners_val_raw[0].strip()} Corners" if corners_val_raw else None
             )
