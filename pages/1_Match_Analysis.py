@@ -3455,8 +3455,20 @@ if not selected_match_data:
                             result_status = "Draw"
 
                     with st.container():
-                        col0, col1, col2, col3, col4, col5, col6, col7, col8 = (
-                            st.columns([0.1, 0.3, 0.2, 0.7, 0.1, 0.4, 0.5, 0.9, 0.4])
+                        (
+                            col0,
+                            col1,
+                            col2,
+                            col3,
+                            col31,
+                            col4,
+                            col5,
+                            col6,
+                            col61,
+                            col7,
+                            col8,
+                        ) = st.columns(
+                            [0.1, 0.3, 0.2, 0.7, 0.4, 0.1, 0.4, 0.5, 0.4, 0.9, 0.4]
                         )
 
                         with col0:
@@ -3499,6 +3511,23 @@ if not selected_match_data:
                             )
                             st.markdown(
                                 f"**{away_team} ({away_rank})**", unsafe_allow_html=True
+                            )
+
+                        with col31:
+                            # TODO: Add overall form
+                            all_form_home = colorize_performance(
+                                match.get("all_form_home", "--")
+                            )[::-1]  # Flip for RTL
+                            all_form_away = colorize_performance(
+                                match.get("all_form_away", "--")
+                            )[::-1]
+                            st.markdown(
+                                all_form_home,
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                all_form_away,
+                                unsafe_allow_html=True,
                             )
 
                         with col4:
@@ -3601,6 +3630,43 @@ if not selected_match_data:
                                 unsafe_allow_html=True,
                             )
 
+                        with col61:
+                            # TODO: Add GS-GA for both home and away
+                            home_gs = match.get("goals_h")
+                            away_gs = match.get("goals_a")
+                            home_ga = match.get("conceded_h")
+                            away_ga = match.get("conceded_a")
+
+                            home_gs_display = (
+                                f"GS: {home_gs}"
+                                if isinstance(home_gs, (int, float))
+                                else ""
+                            )
+                            away_gs_display = (
+                                f"GS: {away_gs}"
+                                if isinstance(away_gs, (int, float))
+                                else ""
+                            )
+                            home_ga_display = (
+                                f"GA: {home_ga}"
+                                if isinstance(home_ga, (int, float))
+                                else ""
+                            )
+                            away_ga_display = (
+                                f"GA: {away_ga}"
+                                if isinstance(away_ga, (int, float))
+                                else ""
+                            )
+
+                            st.markdown(
+                                f"<div style='text-align:center; font-size:1em;'>{home_gs_display} &ndash; {home_ga_display}</div>",
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                f"<div style='text-align:center; font-size:1em;'>{away_gs_display} &ndash; {away_ga_display}</div>",
+                                unsafe_allow_html=True,
+                            )
+
                         with col7:
                             confidence_text = (
                                 f" ({confidence_score}/10)"
@@ -3631,22 +3697,19 @@ if not selected_match_data:
                                     f"Best Bet: {rec_pred}({confidence_score})"
                                 )
                                 if rec_pred_won == "WIN":
-                                    pred_display = f"Best Bet: <span style='color:{GREEN}; '>{rec_pred}({confidence_score}) ✅</span>"  # Added checkmark
+                                    pred_display = f"Best Bet: <span style='color:{GREEN}; '>{rec_pred}({confidence_score}) ✅</span>"
+                                # Only render if pred_display is not empty
+                                if pred_display:
                                     st.markdown(
                                         f"<div style='text-align:left; font-size:1em; font-weight:normal;text-decoration: overline;'>{pred_display}</div>",
                                         unsafe_allow_html=True,
                                     )
-                                else:
-                                    st.markdown(
-                                        f"<div style='text-align:left; font-size:1em; font-weight:normal;text-decoration: overline;'>{pred_display}</div>",
-                                        unsafe_allow_html=True,
-                                    )
-
+                            # Only show caption if nothing to display
                             else:
-                                st.caption("")
+                                st.caption(
+                                    " "
+                                )  # non-breaking space to avoid empty node
 
-                            # --- Check and Display Value Tip ---
-                            # Pass necessary stats to the check function
                             value_bet_won = check_prediction_success(
                                 value_bet,
                                 home_goals,
@@ -3660,28 +3723,18 @@ if not selected_match_data:
                                 match.get("HomeRedResults", 0),
                                 match.get("HomeRedResults", 0),
                             )
-
-                            # st.info(value_bet_won)
                             if value_bet:
                                 value_display = f"Value Tip: {value_bet}"
                                 if value_bet_won == "WIN":
                                     value_display = f"Value Tip: <span style='color:{GREEN};'>{value_bet} ✅</span>"
+                                if value_display:
                                     st.markdown(
                                         f"<div style='text-align:left; font-size:1em; font-weight:normal;'>{value_display}</div>",
                                         unsafe_allow_html=True,
                                     )
-                                else:
-                                    st.markdown(
-                                        f"<div style='text-align:left; font-size:1em; font-weight:normal;'>{value_display}</div>",
-                                        unsafe_allow_html=True,
-                                    )
-
-                                    # st.caption("")
                             else:
-                                st.caption("")
+                                st.caption(" ")
 
-                            # --- Check and Display Alternative Bet ---
-                            # Pass necessary stats to the check function
                             alt_bet_won = check_prediction_success(
                                 alt_pred,
                                 home_goals,
@@ -3695,30 +3748,20 @@ if not selected_match_data:
                                 match.get("HomeRedResults", 0),
                                 match.get("HomeRedResults", 0),
                             )
-
-                            # st.info(alt_bet_won)
                             if alt_pred:
                                 alt_bet_display = f"Alt. Bet: {alt_pred}"
                                 if alt_bet_won == "WIN":
                                     alt_bet_display = f"Alt. Bet: <span style='color:{GREEN};'>{alt_pred} ✅</span>"
-                                #     st.markdown(
-                                #         f"<div style='text-align:left; font-size:1em; font-weight:bold;text-decoration: overline;'>{alt_bet_display}</div>",
-                                #         unsafe_allow_html=True,
-                                #     )
-                                # else:
-                                #     st.markdown(
-                                #         f"<div style='text-align:left; font-size:1em; font-weight:bold;text-decoration: overline;'>{alt_bet_display}</div>",
-                                #         unsafe_allow_html=True,
-                                #     )
-
-                                # st.caption("")
+                            #     if alt_bet_display:
+                            #         st.markdown(
+                            #             f"<div style='text-align:left; font-size:1em; font-weight:normal;'>{alt_bet_display}</div>",
+                            #             unsafe_allow_html=True,
+                            #         )
                             # else:
-                            #     st.caption("")
+                            #     st.caption(" ")
 
-                            # --- Check and Display Match outcome ---
-                            # Pass necessary stats to the check function
                             outcome_conf = (
-                                f"({outcome_val_raw[-1].strip()}"
+                                f"({outcome_val_raw[-1].strip()})"
                                 if outcome_val_raw[-1].strip()
                                 else ""
                             )
@@ -3739,21 +3782,16 @@ if not selected_match_data:
                             )
 
                             if outcome_val:
-                                outcome_display = f"Match outcome: {outcome_val}"  # f"<span style='font-size: 2em; display: block; margin-bottom: 0.2em;'>{outcome_val}</span>"
+                                outcome_display = f"Match outcome: {outcome_val}"
                                 if outcome_bet_won == "WIN":
                                     outcome_display = f"Match outcome: <span style='color:{GREEN};'>{outcome_val} ✅</span>"
+                                if outcome_display:
                                     st.markdown(
                                         f"<div style='text-align:left; font-size:1em; font-weight:normal;text-decoration: none;'>{outcome_display}</div>",
                                         unsafe_allow_html=True,
                                     )
-                                else:
-                                    st.markdown(
-                                        f"<div style='text-align:left; font-size:1em; font-weight:normal;text-decoration: none;'>{outcome_display}</div>",
-                                        unsafe_allow_html=True,
-                                    )
-                                    # st.caption("")
                             else:
-                                st.caption("")
+                                st.caption(" ")
 
                         with col8:
                             st.button(
@@ -4979,10 +5017,10 @@ else:
             )
             form_home = colorize_performance(
                 selected_match_data.get("form_home", "--")
-            )  # .split('//')r
+            )[::-1]  # .split('//')r
             all_form_home = colorize_performance(
                 selected_match_data.get("all_form_home", "--")
-            )  # .split('//')
+            )[::-1]  # .split('//')
             # if len(all_form_home) > 1:
             form_cols_h = st.columns(2)
             form_cols_h[0].metric("Form (H)", form_home)  # [0]
@@ -5097,10 +5135,10 @@ else:
             )
             form_away = colorize_performance(
                 selected_match_data.get("form_away", "--")
-            )  # .split('//')r
+            )[::-1]  # .split('//')r
             all_form_away = colorize_performance(
                 selected_match_data.get("all_form_away", "--")
-            )  # .split('//')
+            )[::-1]  # .split('//')
             # if len(all_form_away) > 1:
             clean_sheet_a = int(selected_match_data.get("clean_sheet_a", "--") * 100)
             l5AwayCS_delta = clean_sheet_a - l5AwayLeagueCleanSheet
